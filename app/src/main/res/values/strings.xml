@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">Casandra</string>
+    <string name="action_settings">Opciones</string>
+    <string name="action_acerca">Acerca de</string>
+    <string name="section_format">Hello World from section: %1$d</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_maps">Casandra</string>
+    <string name="title_activity_maps_example">Map</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Anderson Jurado Castro</string>
+    <string name="nav_header_subtitle">gan091@hotmail.com</string>
+    <string name="nav_header_mobil">3177602383</string>
+    <string name="nav_header_desc">Navigation header</string>
+
+    <string name="menu_option1">Modo Administrador</string>
+    <string name="menu_option2">Ocultar Modo Administrador</string>
+    <string name="menu_option3">Fijar Camara</string>
+    <string name="menu_option4">Respaldo de Informacion</string>
+    <string name="menu_option5">Generar Registros Adicionales</string>
+    <string name="menu_option6">Actualizar Registros</string>
+
+    <string name="description_app">
+        Aplicativo movil desarrollado en el marco del Convenio Interadministrativo No.2017000277 celebrado entre la
+        Universidad de Nariño y el Municipio de La Florida – Nariño, denominado “Revisión y Ajuste del Esquema de Ordenamiento
+        Territorial del Municipio de La Florida – Departamento de Nariño”
+    </string>
+</resources>

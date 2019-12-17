@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#106233</color>
+    <color name="colorPrimaryDark">#106233</color>
+    <color name="colorAccent">#106233</color>
+    <color name="colorButtons">#106233</color>
+    <color name="colorTextField">#92B63D</color>
+    <color name="colorBackground">#CDCB3A</color>
+    <color name="colorDelete">#2196F3</color>
+    <color name="colorIcon">#FFFFFF</color>
+    <color name="colorFab">#93B63E</color>
+</resources>
