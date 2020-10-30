@@ -17,7 +17,7 @@ public class BaseDeDatos extends SQLiteOpenHelper {
     private Cursor cursor;
     private SQLiteDatabase db;
 
-    BaseDeDatos(Context context) {
+    public BaseDeDatos(Context context) {
         super(context, "GramaDB", null, 1);
         contextLocal = context;
     }
@@ -120,6 +120,11 @@ public class BaseDeDatos extends SQLiteOpenHelper {
 
         String sqlTablaTutorial = "CREATE TABLE tbltutorial(visto BOOL)";
 
+        String sqlTablaUsuarios = "CREATE TABLE tblusuarios" +
+                "(iduser INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "user TEXT," +
+                "pass TEXT)";
+
         sqLiteDatabase.execSQL(sqlTablaFachada);
         sqLiteDatabase.execSQL(sqlTablaFachada1);
         sqLiteDatabase.execSQL(sqlTablaVentana);
@@ -133,8 +138,10 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(sqlTablaZona);
         sqLiteDatabase.execSQL(sqlTablaCamara);
         sqLiteDatabase.execSQL(sqlTablaTutorial);
+        sqLiteDatabase.execSQL(sqlTablaUsuarios);
 
         if (inicio){
+            sqLiteDatabase.execSQL("INSERT INTO tblusuarios (iduser, user, pass) VALUES (1,'root','root')");
             sqLiteDatabase.execSQL("INSERT INTO tblzona (id, corregimiento, sector) VALUES (1,'Rural',0)");
             sqLiteDatabase.execSQL("INSERT INTO tbltutorial (visto) VALUES (0)");
             sqLiteDatabase.execSQL("INSERT INTO tblcamara (id, latitud, longitud) VALUES (1,'1.299568021668017','-77.39873830229044')");
@@ -142,7 +149,7 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         }
     }
 
-    void abrirBD(){
+    public void abrirBD(){
         BaseDeDatos bdP;
         bdP = new BaseDeDatos(contextLocal);
         db = bdP.getWritableDatabase();
@@ -221,7 +228,7 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         return cursor;
     }
 
-    Cursor cargarDatos(String tabla){
+    public Cursor cargarDatos(String tabla){
         cursor = db.rawQuery("SELECT * FROM "+tabla,null);
         return cursor;
     }
@@ -269,8 +276,14 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         return cursor;
     }
 
-    void cerrarBD(){
+    public void cerrarBD(){
         db.close();
+    }
+
+    public void eliminarUsuario(int idUsuario){
+        abrirBD();
+        db.execSQL("DELETE FROM tblusuarios WHERE iduser="+idUsuario);
+        cerrarBD();
     }
 
     void eliminarRegistro(String tabla, int idCasa) {
@@ -323,6 +336,15 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         values.put("latitud",lat);
         values.put("longitud",lon);
         db.update("tblcamara",values,"id=1",null);
+        cerrarBD();
+    }
+
+    public void updateUsuario(int id, String u, String p) throws Exception {
+        abrirBD();
+        ContentValues values = new ContentValues();
+        values.put("user",u);
+        values.put("pass",p);
+        db.update("tblusuarios",values,"iduser="+id,null);
         cerrarBD();
     }
 
@@ -403,6 +425,19 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put("visto",valor);
         db.update("tbltutorial",values,"ROWID=1",null);
+    }
+
+    public boolean insertarUsuario(String u, String p){
+        abrirBD();
+        long registro = 0;
+
+        ContentValues values = new ContentValues();
+        values.put("user",u);
+        values.put("pass",p);
+
+        registro = db.insert("tblusuarios",null,values);
+        cerrarBD();
+        return (registro>0);
     }
 
     long insertarCasa(String lat, String lon, String zona) throws Exception{

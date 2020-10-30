@@ -1,6 +1,5 @@
 package com.android.gan091.gramaudenar;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -13,19 +12,16 @@ import android.support.design.widget.NavigationView;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -33,6 +29,9 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.android.gan091.gramaudenar.usermanagement.GestionUsuario;
+import com.android.gan091.gramaudenar.usermanagement.MostrarUsuario;
+import com.android.gan091.gramaudenar.usermanagement.RegistrarUsuarios;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -64,6 +63,7 @@ public class MapsActivity extends AppCompatActivity
     String latitud,longitud;
     int idCasa,corregimiento =10;
     private GoogleMap mMap;
+    GestionUsuario gesUs;
 
     AlertDialog d = null;
     NavigationView navigationView;
@@ -143,6 +143,7 @@ public class MapsActivity extends AppCompatActivity
         if(spCorregimiento.getSelectedItem().toString().equals("Rural")){
         }
         spSector.setOnItemSelectedListener(this);
+        gesUs = new GestionUsuario(context);
     }
 
     /**
@@ -1785,110 +1786,120 @@ public class MapsActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-        // Handle navigation view item clicks here.
-        int id = menuItem.getItemId();
+        // Opciones del panel lateral
 
-        if (id == R.id.nav_modAdmin) {
+        switch (menuItem.getItemId()){
+            case R.id.nav_registerUser:
+                Intent i = new Intent(MapsActivity.this, RegistrarUsuarios.class);
+                startActivity(i);;
+                break;
+            case R.id.nav_showUser:
+                Intent i2 = new Intent(MapsActivity.this, MostrarUsuario.class);
+                startActivity(i2);
+                break;
+            case R.id.nav_loginUser:
+                LayoutInflater layoutInflater = getLayoutInflater();
+                View dialogLayout = layoutInflater.inflate(R.layout.form_login,null);
 
-            LayoutInflater layoutInflater = getLayoutInflater();
-            View dialogLayout = layoutInflater.inflate(R.layout.form_login,null);
+                final EditText etFUser = dialogLayout.findViewById(R.id.etFormUser);
+                final EditText etFPassword = dialogLayout.findViewById(R.id.etFormPassword);
 
-            final EditText etFUser = dialogLayout.findViewById(R.id.etFormUser);
-            final EditText etFPassword = dialogLayout.findViewById(R.id.etFormPassword);
+                Button btnFLAceptar = dialogLayout.findViewById(R.id.btnFormLoginAceptar);
+                Button btnFLCancelar = dialogLayout.findViewById(R.id.btnFormLoginCancelar);
 
-            Button btnFLAceptar = dialogLayout.findViewById(R.id.btnFormLoginAceptar);
-            Button btnFLCancelar = dialogLayout.findViewById(R.id.btnFormLoginCancelar);
+                final AlertDialog.Builder builder = new AlertDialog.Builder(MapsActivity.this);
+                builder.setView(dialogLayout);
+                d = builder.create();
 
-            final AlertDialog.Builder builder = new AlertDialog.Builder(MapsActivity.this);
-            builder.setView(dialogLayout);
-            d = builder.create();
+                btnFLAceptar.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
 
-            btnFLAceptar.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-
-                    if (TextUtils.isEmpty(etFUser.getText().toString())){
-                        etFUser.requestFocus();
-                        etFUser.setError("El nombre de usuario no puede quedar vacio");
-                        return;
-                    }
-                    else{
-                        if(TextUtils.isEmpty(etFPassword.getText().toString())){
-                            etFPassword.requestFocus();
-                            etFPassword.setError("La contraseña no puede quedar vacia");
+                        if (TextUtils.isEmpty(etFUser.getText().toString())){
+                            etFUser.requestFocus();
+                            etFUser.setError("El nombre de usuario no puede quedar vacio");
                             return;
                         }
-                        else {
-                            String user = etFUser.getText().toString();
-                            String password = etFPassword.getText().toString();
-                            if (user.equals("gan091") && password.equals("0000")){
-                                navigationView.getMenu().findItem(R.id.nav_camera).setVisible(true);
-                                navigationView.getMenu().findItem(R.id.nav_backup).setVisible(true);
-                                navigationView.getMenu().findItem(R.id.nav_extraRecords).setVisible(true);
-                                navigationView.getMenu().findItem(R.id.nav_updateRecords).setVisible(true);
-                                spSector.setVisibility(View.VISIBLE);
-                                spCorregimiento.setVisibility(View.VISIBLE);
-                                btnActualizar.setVisibility(View.VISIBLE);
-
-                                Snackbar.make(view, "Accediste correctamente al modo administrador, revisa las funciones disponibles", Snackbar.LENGTH_LONG)
-                                        .setAction("Action", null).show();
-                            }
-                            else{
-                                Snackbar.make(view, "Contraseña y/o Usuario invalido", Snackbar.LENGTH_LONG)
-                                        .setAction("Action", null).show();
+                        else{
+                            if(TextUtils.isEmpty(etFPassword.getText().toString())){
+                                etFPassword.requestFocus();
+                                etFPassword.setError("La contraseña no puede quedar vacia");
                                 return;
                             }
+                            else {
+                                String user = etFUser.getText().toString();
+                                String password = etFPassword.getText().toString();
+                                if (gesUs.login(user,password) >= 1){
+                                    navigationView.getMenu().findItem(R.id.nav_loginUser).setVisible(false);
+                                    navigationView.getMenu().findItem(R.id.nav_registerUser).setVisible(true);
+                                    navigationView.getMenu().findItem(R.id.nav_showUser).setVisible(true);
+                                    navigationView.getMenu().findItem(R.id.nav_closeLogin).setVisible(true);
+                                    navigationView.getMenu().findItem(R.id.nav_camera).setVisible(true);
+                                    navigationView.getMenu().findItem(R.id.nav_backup).setVisible(true);
+                                    navigationView.getMenu().findItem(R.id.nav_extraRecords).setVisible(true);
+                                    navigationView.getMenu().findItem(R.id.nav_updateRecords).setVisible(true);
+                                    spSector.setVisibility(View.VISIBLE);
+                                    spCorregimiento.setVisibility(View.VISIBLE);
+                                    btnActualizar.setVisibility(View.VISIBLE);
+
+                                    Snackbar.make(navigationView.getHeaderView(0), "Iniciaste sesión correctamente, revisa las funciones disponibles", Snackbar.LENGTH_LONG)
+                                            .setAction("Action", null).show();
+                                }
+                                else{
+                                    Snackbar.make(view, "Contraseña y/o Usuario invalido", Snackbar.LENGTH_LONG)
+                                            .setAction("Action", null).show();
+                                    return;
+                                }
+                            }
                         }
+                        d.dismiss();
                     }
-                    d.dismiss();
-                }
-            });
+                });
 
-            btnFLCancelar.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    d.dismiss();
-                }
-            });
+                btnFLCancelar.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        d.dismiss();
+                    }
+                });
 
-            d.show();
-
-            // Handle the camera action
-        } else if (id == R.id.nav_hideAdmin) {
-
-            navigationView.getMenu().findItem(R.id.nav_camera).setVisible(false);
-            navigationView.getMenu().findItem(R.id.nav_backup).setVisible(false);
-            navigationView.getMenu().findItem(R.id.nav_extraRecords).setVisible(false);
-            navigationView.getMenu().findItem(R.id.nav_updateRecords).setVisible(false);
-            spSector.setVisibility(View.INVISIBLE);
-            spCorregimiento.setVisibility(View.INVISIBLE);
-            btnActualizar.setVisibility(View.INVISIBLE);
-
-        } else if (id == R.id.nav_camera) {
-
-            fijarZona();
-
-        } else if (id == R.id.nav_backup) {
-
-            generarArchivoT();
+                d.show();
+                break;
+            case R.id.nav_closeLogin:
+                navigationView.getMenu().findItem(R.id.nav_loginUser).setVisible(true);
+                navigationView.getMenu().findItem(R.id.nav_registerUser).setVisible(false);
+                navigationView.getMenu().findItem(R.id.nav_showUser).setVisible(false);
+                navigationView.getMenu().findItem(R.id.nav_closeLogin).setVisible(false);
+                navigationView.getMenu().findItem(R.id.nav_camera).setVisible(false);
+                navigationView.getMenu().findItem(R.id.nav_backup).setVisible(false);
+                navigationView.getMenu().findItem(R.id.nav_extraRecords).setVisible(false);
+                navigationView.getMenu().findItem(R.id.nav_updateRecords).setVisible(false);
+                spSector.setVisibility(View.INVISIBLE);
+                spCorregimiento.setVisibility(View.INVISIBLE);
+                btnActualizar.setVisibility(View.INVISIBLE);
+                break;
+            case R.id.nav_camera:
+                fijarZona();
+                break;
+            case R.id.nav_backup:
+                generarArchivoT();
                 generarArchivoF();
                 generarArchivoV();
                 generarArchivoP();
                 generarArchivoOCH();
                 generarArchivoL();
                 generarArchivoC();
-            backupDatabase();
-            Toast t = Toast.makeText(this,"Exportacion de Archivos completada",Toast.LENGTH_SHORT);
-            t.show();
+                backupDatabase();
 
-        } else if (id == R.id.nav_extraRecords) {
-
-            generarInfExtra();
-
-        } else if (id == R.id.nav_updateRecords) {
-
-            updateCeniza();
-
+                Toast t = Toast.makeText(this,"Exportacion de Archivos completada",Toast.LENGTH_SHORT);
+                t.show();
+                break;
+            case R.id.nav_extraRecords:
+                generarInfExtra();
+                break;
+            case R.id.nav_updateRecords:
+                updateCeniza();
+                break;
         }
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -1909,5 +1920,10 @@ public class MapsActivity extends AppCompatActivity
             Log.e("backup", "Error: No se creo el directorio público");
 
         return directorio;
+    }
+
+    public void mensaje (String m){
+
+
     }
 }

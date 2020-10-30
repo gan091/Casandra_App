@@ -4,37 +4,52 @@
     tools:showIn="navigation_view">
 
     <group android:checkableBehavior="single">
-        <item
-            android:id="@+id/nav_modAdmin"
-            android:icon="@drawable/ic_menu_manage"
-            android:title="@string/menu_option1"/>
-        <item
-            android:id="@+id/nav_hideAdmin"
-            android:icon="@drawable/ic_menu_lock"
-            android:title="@string/menu_option2" />
+        <item android:title="Gestion de Usuarios">
+            <menu>
+                <item
+                    android:id="@+id/nav_loginUser"
+                    android:icon="@drawable/ic_login"
+                    android:title="@string/mOpLogin"/>
+                <item
+                    android:id="@+id/nav_registerUser"
+                    android:icon="@drawable/ic_add_user"
+                    android:title="@string/mOpAddUser"
+                    android:visible="false"/>
+                <item
+                    android:id="@+id/nav_showUser"
+                    android:icon="@drawable/ic_show_users"
+                    android:title="@string/mOpShowUser"
+                    android:visible="false"/>
+                <item
+                    android:id="@+id/nav_closeLogin"
+                    android:icon="@drawable/ic_menu_lock"
+                    android:title="@string/mOpCloseLogin"
+                    android:visible="false"/>
+            </menu>
+        </item>
     </group>
 
     <item android:title="Opciones Gestion de Archivos">
-        <menu>
+        <menu >
             <item
                 android:id="@+id/nav_camera"
                 android:icon="@drawable/ic_menu_camera"
-                android:title="@string/menu_option3"
+                android:title="@string/mOpSetCam"
                 android:visible="false"/>
             <item
                 android:id="@+id/nav_backup"
                 android:icon="@drawable/ic_menu_backup"
-                android:title="@string/menu_option4"
+                android:title="@string/mOpBackup"
                 android:visible="false"/>
             <item
                 android:id="@+id/nav_extraRecords"
                 android:icon="@drawable/ic_menu_extra"
-                android:title="@string/menu_option5"
+                android:title="@string/mOpGenerateExtraRecords"
                 android:visible="false"/>
             <item
                 android:id="@+id/nav_updateRecords"
                 android:icon="@drawable/ic_menu_update"
-                android:title="@string/menu_option6"
+                android:title="@string/mOpUpdateRecords"
                 android:visible="false"/>
         </menu>
     </item>
