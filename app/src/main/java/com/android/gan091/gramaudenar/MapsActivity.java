@@ -4,10 +4,13 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.NavigationView;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
@@ -51,6 +54,8 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.nio.channels.FileChannel;
 
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
 public class MapsActivity extends AppCompatActivity
         implements OnMapReadyCallback,
         View.OnClickListener,
@@ -89,6 +94,8 @@ public class MapsActivity extends AppCompatActivity
     String [] opcSecM = new String[] {"Sector MA","Sector MB","Sector MC","Sector MD","Sector ME","Sector MF","Sector MG","Sector MH"};
     String [] opcSecRu = new String[] {""};
     String [] archivoCad;
+
+    boolean validarPermisos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -1882,17 +1889,11 @@ public class MapsActivity extends AppCompatActivity
                 fijarZona();
                 break;
             case R.id.nav_backup:
-                generarArchivoT();
-                generarArchivoF();
-                generarArchivoV();
-                generarArchivoP();
-                generarArchivoOCH();
-                generarArchivoL();
-                generarArchivoC();
-                backupDatabase();
-
-                Toast t = Toast.makeText(this,"Exportacion de Archivos completada",Toast.LENGTH_SHORT);
-                t.show();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE}, PackageManager.PERMISSION_GRANTED);
+                }else {
+                    backup();
+                }
                 break;
             case R.id.nav_extraRecords:
                 generarInfExtra();
@@ -1922,8 +1923,28 @@ public class MapsActivity extends AppCompatActivity
         return directorio;
     }
 
-    public void mensaje (String m){
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            backup();
+        }else {
+            Toast.makeText(MapsActivity.this, "Permisos denegados, no se pudo realizar la exportación de los datos", Toast.LENGTH_SHORT).show();
+        }
+    }
 
+    public void backup(){
+        generarArchivoT();
+        generarArchivoF();
+        generarArchivoV();
+        generarArchivoP();
+        generarArchivoOCH();
+        generarArchivoL();
+        generarArchivoC();
+        backupDatabase();
+
+        Toast t = Toast.makeText(this,"Exportacion de Archivos completada",Toast.LENGTH_SHORT);
+        t.show();
     }
 }

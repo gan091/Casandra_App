@@ -6,8 +6,6 @@
     android:layout_height="match_parent">
 
     <android.support.constraint.ConstraintLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context="com.android.gan091.gramaudenar.CenizaFragment"
@@ -262,6 +260,7 @@
             android:fontFamily="@font/open_sans"
             android:text="40%"
             android:textAlignment="center"
+            android:textSize="14dp"
             android:textStyle="bold"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toLeftOf="@+id/tvIncCub"
@@ -275,6 +274,7 @@
             android:fontFamily="@font/open_sans"
             android:text="15%"
             android:textAlignment="center"
+            android:textSize="14dp"
             android:textStyle="bold"
             app:layout_constraintLeft_toRightOf="@+id/tvMaterial"
             app:layout_constraintRight_toLeftOf="@+id/tvMEA"
@@ -288,6 +288,7 @@
             android:fontFamily="@font/open_sans"
             android:text="35%"
             android:textAlignment="center"
+            android:textSize="14dp"
             android:textStyle="bold"
             app:layout_constraintLeft_toRightOf="@+id/tvIncCub"
             app:layout_constraintRight_toLeftOf="@+id/tvEstGenC"
@@ -301,6 +302,7 @@
             android:fontFamily="@font/open_sans"
             android:text="10%"
             android:textAlignment="center"
+            android:textSize="14dp"
             android:textStyle="bold"
             app:layout_constraintLeft_toRightOf="@+id/tvMEA"
             app:layout_constraintRight_toLeftOf="@+id/textView26"
@@ -308,12 +310,13 @@
 
         <TextView
             android:id="@+id/textView26"
-            android:layout_width="85dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:fontFamily="@font/open_sans"
             android:text="RESULTADO"
             android:textAlignment="center"
+            android:textSize="14dp"
             android:textStyle="bold"
             app:layout_constraintLeft_toRightOf="@+id/tvEstGenC"
             app:layout_constraintRight_toRightOf="parent"

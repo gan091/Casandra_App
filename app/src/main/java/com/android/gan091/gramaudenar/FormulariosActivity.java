@@ -1,6 +1,7 @@
 package com.android.gan091.gramaudenar;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -69,6 +70,8 @@ public class FormulariosActivity extends AppCompatActivity implements OndaChoque
         //noinspection SimplifiableIfStatement
         switch (id){
             case R.id.action_exit:
+                Intent i = new Intent(FormulariosActivity.this,MapsActivity.class);
+                startActivity(i);
                 finish();
                 break;
         }
