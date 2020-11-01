@@ -279,7 +279,7 @@
             app:layout_constraintVertical_bias="0.0" />
 
         <TextView
-            android:id="@+id/tvPAb"
+            android:id="@+id/tv_gap_percentage"
             android:layout_width="70dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -295,7 +295,7 @@
             app:layout_constraintVertical_bias="0.0" />
 
         <TextView
-            android:id="@+id/tvTipOnCh"
+            android:id="@+id/tv_shock_wave_typology"
             android:layout_width="110dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -309,7 +309,7 @@
             app:layout_constraintTop_toBottomOf="@+id/textView16" />
 
         <EditText
-            android:id="@+id/etPAb"
+            android:id="@+id/et_gap_percentage"
             android:layout_width="70dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -324,22 +324,22 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/guideline5"
             app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="@+id/tvPAb"
-            app:layout_constraintTop_toBottomOf="@+id/tvPAb"
+            app:layout_constraintStart_toStartOf="@+id/tv_gap_percentage"
+            app:layout_constraintTop_toBottomOf="@+id/tv_gap_percentage"
             app:layout_constraintVertical_bias="0.0" />
 
         <Spinner
-            android:id="@+id/spTipOn"
+            android:id="@+id/sp_shock_wave_typology"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.3"
             app:layout_constraintStart_toStartOf="@+id/guideline5"
-            app:layout_constraintTop_toBottomOf="@+id/tvPAb" />
+            app:layout_constraintTop_toBottomOf="@+id/tv_gap_percentage" />
 
         <TextView
-            android:id="@+id/tvAb1"
+            android:id="@+id/tv_perc_accor_gaps"
             android:layout_width="40dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
@@ -351,10 +351,10 @@
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@+id/guideline5"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/etPAb" />
+            app:layout_constraintTop_toBottomOf="@+id/et_gap_percentage" />
 
         <TextView
-            android:id="@+id/tvAlt"
+            android:id="@+id/tv_perc_accor_height"
             android:layout_width="40dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
@@ -367,7 +367,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.4"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/etPAb"
+            app:layout_constraintTop_toBottomOf="@+id/et_gap_percentage"
             app:layout_constraintVertical_bias="0.0" />
 
         <TextView
@@ -382,10 +382,10 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.3"
             app:layout_constraintStart_toStartOf="@+id/guideline5"
-            app:layout_constraintTop_toBottomOf="@+id/etPAb" />
+            app:layout_constraintTop_toBottomOf="@+id/et_gap_percentage" />
 
         <EditText
-            android:id="@+id/etPAE"
+            android:id="@+id/et_perc_accor_gaps"
             android:layout_width="40dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -400,12 +400,12 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="@+id/tvAb1"
-            app:layout_constraintTop_toBottomOf="@+id/tvAb1"
+            app:layout_constraintStart_toStartOf="@+id/tv_perc_accor_gaps"
+            app:layout_constraintTop_toBottomOf="@+id/tv_perc_accor_gaps"
             app:layout_constraintVertical_bias="0.0" />
 
         <EditText
-            android:id="@+id/etPCE"
+            android:id="@+id/et_perc_accor_height"
             android:layout_width="40dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -420,12 +420,12 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="@+id/tvAlt"
-            app:layout_constraintTop_toBottomOf="@+id/tvAlt"
+            app:layout_constraintStart_toStartOf="@+id/tv_perc_accor_height"
+            app:layout_constraintTop_toBottomOf="@+id/tv_perc_accor_height"
             app:layout_constraintVertical_bias="0.0" />
 
         <EditText
-            android:id="@+id/etRE"
+            android:id="@+id/et_result"
             android:layout_width="85dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -443,7 +443,7 @@
             app:layout_constraintTop_toBottomOf="@+id/textView17" />
 
         <TextView
-            android:id="@+id/tvTipEnt"
+            android:id="@+id/tv_burying_typology"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
@@ -454,11 +454,11 @@
             app:layout_constraintEnd_toStartOf="@+id/guideline5"
             app:layout_constraintHorizontal_bias="0.8"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/etPAE"
+            app:layout_constraintTop_toBottomOf="@+id/et_perc_accor_gaps"
             app:layout_constraintVertical_bias="0.0" />
 
         <Spinner
-            android:id="@+id/spTipEnt"
+            android:id="@+id/sp_burying_typology"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
@@ -466,7 +466,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.2"
             app:layout_constraintStart_toStartOf="@+id/guideline5"
-            app:layout_constraintTop_toBottomOf="@+id/etPAE"
+            app:layout_constraintTop_toBottomOf="@+id/et_perc_accor_gaps"
             app:layout_constraintVertical_bias="0.0" />
 
         <Button
@@ -485,7 +485,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.514"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/spTipEnt" />
+            app:layout_constraintTop_toBottomOf="@+id/sp_burying_typology" />
 
         <android.support.constraint.Guideline
             android:id="@+id/guideline5"

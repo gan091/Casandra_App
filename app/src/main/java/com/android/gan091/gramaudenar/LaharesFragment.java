@@ -7,7 +7,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,7 +30,7 @@ import android.widget.Toast;
 public class LaharesFragment extends Fragment implements View.OnClickListener{
 
     private OnFragmentInteractionListener mListener;
-    int idCasa;
+    String id_house;
     float puntajeEst,puntajeMuros,puntajeEstEd,resTipologia;
     long idRegistro = -1;
     AlertDialog d = null;
@@ -137,7 +137,7 @@ public class LaharesFragment extends Fragment implements View.OnClickListener{
 
         Bundle bundle = getActivity().getIntent().getExtras();
 
-        idCasa = bundle.getInt("idcasa");
+        id_house = bundle.getString("idcasa");
 
         cargarDatos();
 
@@ -167,67 +167,73 @@ public class LaharesFragment extends Fragment implements View.OnClickListener{
 
     public void guardarBD(){
 
-        if (bdP.existeRegistro(idRegistro,"tbllahares")){
+        if (bdP.existeRegistro_RID(idRegistro,"tbllahares")){
             AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
 
             builder1.setTitle("Registro Existente")
                     .setMessage("Ya hay registros almacenados previamente ¿Desea actualizar los registros?")
-                    .setPositiveButton("Si",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    obtenerTipologia();
+                    .setPositiveButton("Si", new DialogInterface.OnClickListener() {
 
-                                    try {
-                                        bdP.abrirBD();
-                                        bdP.updateLahares(
-                                                idRegistro,
-                                                cbReforzado.isChecked(),
-                                                spMuros.getSelectedItem().toString(),
-                                                spEstadoGeneral.getSelectedItem().toString(),
-                                                spTipLahares.getSelectedItem().toString(),
-                                                etObservaciones.getText().toString().replaceAll("\n", ""));
-                                        bdP.cerrarBD();
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            obtenerTipologia();
 
-                                        Toast toast;
-                                        toast=Toast.makeText(context,"Actualizacion de Registro Completada",Toast.LENGTH_SHORT);
-                                        toast.show();
-                                    }
-                                    catch (Exception e){
-                                        Toast toast;
-                                        toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
-                                        toast.show();
-                                    }
-                                }
-                            })
-                    .setNegativeButton("No",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    d.dismiss();
-                                }
-                            });
+                            try {
+                                bdP.abrirBD();
+                                bdP.updateLahares_RID(idRegistro,
+                                                      cbReforzado.isChecked(),
+                                                      spMuros.getSelectedItem().toString(),
+                                                      spEstadoGeneral.getSelectedItem().toString(),
+                                                      spTipLahares.getSelectedItem().toString(),
+                                                      etObservaciones.getText().toString().replaceAll("\n", ""));
+                                bdP.cerrarBD();
+
+                                Toast toast;
+                                toast=Toast.makeText(context,"Actualizacion de Registro Completada",Toast.LENGTH_SHORT);
+                                toast.show();
+                            }
+                            catch (Exception e){
+                                Toast toast;
+                                toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
+                                toast.show();
+                            }
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            d.dismiss();
+                        }
+                    });
             d = builder1.create();
             d.show();
         }else{
-            obtenerTipologia();
-            try {
-                idRegistro = bdP.insertarLahares(
-                        idCasa,
-                        cbReforzado.isChecked(),
-                        spMuros.getSelectedItem().toString(),
-                        spEstadoGeneral.getSelectedItem().toString(),
-                        spTipLahares.getSelectedItem().toString(),
-                        etObservaciones.getText().toString().replaceAll("\n", ""));
+            if (spMuros.getSelectedItem().toString().equals(" ") &&
+                spEstadoGeneral.getSelectedItem().toString().equals(" ") &&
+                TextUtils.isEmpty(etObservaciones.getText().toString())
+            ){
+                etObservaciones.requestFocus();
+                etObservaciones.setError("Al menos ingresar las observaciones de porque no se ha registrado ningun dato");
+            }else {
+                obtenerTipologia();
+                try {
+                    idRegistro = bdP.insertarLahares_ID(id_house,
+                            cbReforzado.isChecked(),
+                            spMuros.getSelectedItem().toString(),
+                            spEstadoGeneral.getSelectedItem().toString(),
+                            spTipLahares.getSelectedItem().toString(),
+                            etObservaciones.getText().toString().replaceAll("\n", ""));
 
-                Toast toast;
-                toast=Toast.makeText(context,"Tipologia Lahares - Guardado Exitoso",Toast.LENGTH_SHORT);
-                toast.show();
-            }
-            catch (Exception e){
-                Toast toast;
-                toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
-                toast.show();
+                    Toast toast;
+                    toast=Toast.makeText(context,"Tipologia Lahares - Guardado Exitoso",Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+                catch (Exception e){
+                    Toast toast;
+                    toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
+                    toast.show();
+                }
             }
         }
     }
@@ -319,7 +325,7 @@ public class LaharesFragment extends Fragment implements View.OnClickListener{
 
     public void cargarDatos(){
         bdP.abrirBD();
-        Cursor cursorLahares = bdP.cargarDatosTablas(idCasa,"tbllahares");
+        Cursor cursorLahares = bdP.cargarDatos_ID_RID(id_house,"tbllahares");
 
         /*
         0 -> RowId
@@ -338,17 +344,18 @@ public class LaharesFragment extends Fragment implements View.OnClickListener{
             2 -> Estado General de la Edificacion
              */
             do {
+                idRegistro = cursorLahares.getLong(0);
+
                 if (cursorLahares.getInt(2)==1){
                     cbReforzado.setChecked(true);
                 }
 
                 setSpinner(cursorLahares.getString(3),1);
                 setSpinner(cursorLahares.getString(4),2);
+                setSpinner(cursorLahares.getString(5),3);
                 etObservaciones.setText(cursorLahares.getString(6));
-                idRegistro = cursorLahares.getLong(0);
-            }while (cursorLahares.moveToNext());
 
-            obtenerTipologia();
+            }while (cursorLahares.moveToNext());
         }
         bdP.cerrarBD();
     }
@@ -360,6 +367,9 @@ public class LaharesFragment extends Fragment implements View.OnClickListener{
         switch (tipo){
             case 1:
                 switch (opc){
+                    case " ":
+                        spMuros.setSelection(0);
+                        break;
                     case "Ladrillo Macizo":
                         spMuros.setSelection(1);
                         break;
@@ -379,6 +389,9 @@ public class LaharesFragment extends Fragment implements View.OnClickListener{
                 break;
             case 2:
                 switch (opc){
+                    case " ":
+                        spEstadoGeneral.setSelection(0);
+                        break;
                     case "Bueno":
                         spEstadoGeneral.setSelection(1);
                         break;
@@ -387,6 +400,19 @@ public class LaharesFragment extends Fragment implements View.OnClickListener{
                         break;
                     case "Malo":
                         spEstadoGeneral.setSelection(3);
+                        break;
+                }
+                break;
+            case 3:
+                switch (opc){
+                    case "Tipologia_1":
+                        spTipLahares.setSelection(1);
+                        break;
+                    case "Tipologia_2":
+                        spTipLahares.setSelection(2);
+                        break;
+                    case "Tipologia_3":
+                        spTipLahares.setSelection(3);
                         break;
                 }
                 break;

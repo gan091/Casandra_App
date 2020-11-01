@@ -10,7 +10,6 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
 import android.support.design.widget.NavigationView;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
@@ -39,7 +38,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -53,8 +51,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import android.provider.Settings.Secure;
 
 public class MapsActivity extends AppCompatActivity
         implements OnMapReadyCallback,
@@ -65,8 +66,8 @@ public class MapsActivity extends AppCompatActivity
 
     boolean contains = false;
     char sector = 'a';
-    String latitud,longitud;
-    int idCasa,corregimiento =10;
+    String latitud,longitud,idCasa="", id1 ="", id2="",pk="";
+    int corregimiento =10,numeral,pos;
     private GoogleMap mMap;
     GestionUsuario gesUs;
 
@@ -77,6 +78,7 @@ public class MapsActivity extends AppCompatActivity
     Button btnActualizar;
     Context context;
     LatLng camara;
+    List<String> listaDatos = new ArrayList<String>();
 
     PolygonOptions pOpFSA;
     PolygonOptions pOpRSA, pOpRSB, pOpRSC, pOpRSD,pOpRSE,pOpRSF,pOpRSG;
@@ -94,8 +96,6 @@ public class MapsActivity extends AppCompatActivity
     String [] opcSecM = new String[] {"Sector MA","Sector MB","Sector MC","Sector MD","Sector ME","Sector MF","Sector MG","Sector MH"};
     String [] opcSecRu = new String[] {""};
     String [] archivoCad;
-
-    boolean validarPermisos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +118,8 @@ public class MapsActivity extends AppCompatActivity
         mapFragment.getMapAsync(this);
 
         context = this;
+
+        id1 = Secure.getString(this.getApplicationContext().getContentResolver(), Secure.ANDROID_ID);
 
         spSector = findViewById(R.id.spSector);
         spCorregimiento = findViewById(R.id.spCorregimiento);
@@ -153,20 +155,11 @@ public class MapsActivity extends AppCompatActivity
         gesUs = new GestionUsuario(context);
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-        extras();
+        menuGestionCasas();
     }
 
     @Override
@@ -340,238 +333,184 @@ public class MapsActivity extends AppCompatActivity
 
     public void cargarDatos(){
         bdP.abrirBD();
-        Cursor cursor = bdP.cargarDatos("tblcasa");
-        Cursor cOCh, cC, cL;
+        Cursor cursorCD = bdP.cargarDatos("tblcasa");
+        Cursor cursorOndadeChoqueCD, cursorCenizaCD, cursorLaharesCD;
 
         try {
-            if (cursor.moveToFirst()){
+            if (cursorCD.moveToFirst()){
                 do {
-                    idCasa = cursor.getInt(0);
-                    latitud = cursor.getString(1);
-                    longitud = cursor.getString(2);
+                    idCasa = cursorCD.getString(0);
+                    latitud = cursorCD.getString(1);
+                    longitud = cursorCD.getString(2);
 
-                    int res = 0;
+                    int resultadoCD = 0;
 
-                    cOCh = bdP.cargarDatosTablas(idCasa,"tblondaChoque");
-
-                    if(cOCh.moveToFirst()){
-                        res = res + 1;
+                    cursorOndadeChoqueCD = bdP.cargarDatos_ID_RID(idCasa,"tblondaChoque");
+                    if(cursorOndadeChoqueCD.moveToFirst()){
+                        resultadoCD += 1;
                     }
 
-                    cC = bdP.cargarDatosTablas(idCasa,"tblceniza");
-                    if(cC.moveToFirst()){
-                        res = res + 1;
+                    cursorCenizaCD = bdP.cargarDatos_ID_RID(idCasa,"tblceniza");
+                    if(cursorCenizaCD.moveToFirst()){
+                        resultadoCD += 1;
                     }
 
-                    cL = bdP.cargarDatosTablas(idCasa,"tbllahares");
-                    if(cL.moveToFirst()){
-                        res = res + 1;
+                    cursorLaharesCD = bdP.cargarDatos_ID_RID(idCasa,"tbllahares");
+                    if(cursorLaharesCD.moveToFirst()){
+                        resultadoCD += 1;
                     }
 
-                        if (res == 3){
-                            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.ic_houseok);
-                            mMap.addMarker(new MarkerOptions()
-                                    .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
-                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-                        }else {
-                            if (res > 0 && res < 3){
-
-                                mMap.addMarker(new MarkerOptions()
-                                        .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
-                                        .icon(BitmapDescriptorFactory.defaultMarker(25.0f)));
-                            }
-                            else {
-                                mMap.addMarker(new MarkerOptions()
-                                        .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
-                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-                            }
-                        }
-
-                        /*Cursor cursorTipologia = bdP.cargarDatosTablas(latitud,longitud,"tblCeniza");
-                    if (cursorTipologia.moveToFirst()){
-                        do{
-                            String tip = cursorTipologia.getString(8);
-                            if (tip.equals("Tipologia_3")){
-                                mMap.addMarker(new MarkerOptions()
-                                        .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
-                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-                            }
-                            else {
-                                if (tip.equals("Tipologia_2")){
-                                    mMap.addMarker(new MarkerOptions()
-                                            .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
-                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
-                                }
-                                else{
-                                        if (tip.equals("Tipologia_1")){
-                                            Log.i("Coordenadas","Latitud: "+latitud+" Longitud: "+longitud);
-                                            mMap.addMarker(new MarkerOptions()
-                                                    .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
-                                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-                                        }
-                                        else {
-                                            mMap.addMarker(new MarkerOptions()
-                                                    .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
-                                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-                                        }
-                                }
-                            }
-                        }while (cursorTipologia.moveToNext());
-                    }*/
-                    /*if (cursor.getInt(2) == 1){
+                    if (resultadoCD == 3){
                         mMap.addMarker(new MarkerOptions()
-                                .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                            .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                    }else if (resultadoCD > 0 && resultadoCD < 3){
+                        mMap.addMarker(new MarkerOptions()
+                            .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
+                            .icon(BitmapDescriptorFactory.defaultMarker(25.0f)));
+                    }else {
+                        mMap.addMarker(new MarkerOptions()
+                            .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
                     }
-                    else {
-                        if (cursor.getInt(2) == 2){
-                            mMap.addMarker(new MarkerOptions()
-                                    .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud)))
-                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
-                        }
-                        else {
-                            mMap.addMarker(new MarkerOptions()
-                                    .position(new LatLng(Double.parseDouble(latitud),Double.parseDouble(longitud))));
-                        }
-                    }*/
-                }while (cursor.moveToNext());
+                }while (cursorCD.moveToNext());
             }
         }
         catch (Exception e){
-            Log.e("Base de Datos","Error al leer la base de datos");
+            Toast toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
+            toast.show();
         }
         bdP.close();
     }
 
-    public void generarInfExtra(){
+    public void generarInformacionExtra(){
         bdP.abrirBD();
 
-        Cursor cursor = bdP.cargarDatos("tblcasa");
-        Cursor cursorF1 = bdP.cargarDatos("tblfachada1");
-        Cursor cursorV1 = bdP.cargarDatos("tblventana1");
-        Cursor cursorP1 = bdP.cargarDatos("tblpuerta1");
+        Cursor cursorGEI = bdP.cargarDatos("tblcasa");
+        Cursor cursorFachada1 = bdP.cargarDatos("tblfachada1");
+        Cursor cursorVentana1 = bdP.cargarDatos("tblventana1");
+        Cursor cursorPuerta1 = bdP.cargarDatos("tblpuerta1");
 
         try {
-            if (cursorF1.getCount() != 0){
+            if (cursorFachada1.getCount() != 0){
                 bdP.limpiarTabla("tblfachada1");
             }
 
-            if (cursorV1.getCount() != 0){
+            if (cursorVentana1.getCount() != 0){
                 bdP.limpiarTabla("tblventana1");
             }
 
-            if (cursorP1.getCount() != 0){
+            if (cursorPuerta1.getCount() != 0){
                 bdP.limpiarTabla("tblpuerta1");
             }
 
-            if (cursor.moveToFirst()){
+            if (cursorGEI.moveToFirst()){
                 do {
-                    idCasa = cursor.getInt(0);
+                    idCasa = cursorGEI.getString(0);
 
-                    Cursor cF,cV,cP;
+                    Cursor cursorFachadaGEI,cursorVentanaGEI,cursorPuertaGEI;
 
-                    cF = bdP.cargarDatosTablas(idCasa,"tblfachada");
+                    cursorFachadaGEI = bdP.cargarDatos_ID_RID(idCasa,"tblfachada");
 
-                    float ancM=0,altM=0,arM=0,arT=0;
+                    float anchoMayorFachada=0,altoMayorFachada=0,areaMayorFachada=0,areaTotalFachada=0;
 
-                    if (cF.moveToFirst()){
+                    if (cursorFachadaGEI.moveToFirst()){
                         do {
-                            if(ancM == 0 && altM == 0){
-                                ancM = cF.getFloat(2);
-                                altM = cF.getFloat(3);
-                                arM = cF.getFloat(4);
-                            }else {
-                                if(arM < cF.getFloat(4)){
-                                    ancM = cF.getFloat(2);
-                                    altM = cF.getFloat(3);
-                                    arM = cF.getFloat(4);
-                                }
+                            if(anchoMayorFachada == 0 && altoMayorFachada == 0){
+                                anchoMayorFachada = cursorFachadaGEI.getFloat(2);
+                                altoMayorFachada = cursorFachadaGEI.getFloat(3);
+                                areaMayorFachada = cursorFachadaGEI.getFloat(4);
+                            }else if (areaMayorFachada < cursorFachadaGEI.getFloat(4)){
+                                    anchoMayorFachada = cursorFachadaGEI.getFloat(2);
+                                    altoMayorFachada = cursorFachadaGEI.getFloat(3);
+                                    areaMayorFachada = cursorFachadaGEI.getFloat(4);
                             }
-                            arT+=cF.getFloat(4);
-                        }while (cF.moveToNext());
-                        bdP.insertarFachada1(idCasa,ancM,altM,arM,arT);
+                            areaTotalFachada += cursorFachadaGEI.getFloat(4);
+                        }while (cursorFachadaGEI.moveToNext());
+                        bdP.insertarFachada1_ID(idCasa,anchoMayorFachada,altoMayorFachada,areaMayorFachada,areaTotalFachada);
                     }else {
-                        bdP.insertarFachada1(idCasa,0,0,0,0);
+                        bdP.insertarFachada1_ID(idCasa,0,0,0,0);
                     }
 
-                    cV = bdP.cargarDatosTablas(idCasa,"tblventana");
+                    cursorVentanaGEI = bdP.cargarDatos_ID_RID(idCasa,"tblventana");
 
-                    float ancMV=0,altMV=0,arMV=0,ancMen=0,altMen=0,arMen=0,arTV=0,pAb=0;
-                    int nPG=0,nPP=0;
+                    float anchoMayorVentana=0,
+                          altoMayorVentana=0,
+                          areaMayorVentana=0,
+                          anchoMenorVentana=0,
+                          altoMenorVentana=0,
+                          areaMenorVentana=0,
+                          areaTotalVentana=0,
+                          porcentajeAberturas=0;
+                    int numeroPisoMayorVentana=0,numeroPisoMenorVentana=0;
 
-                    if (cV.moveToFirst()){
+                    if (cursorVentanaGEI.moveToFirst()){
                         do {
-                            if (cV.getCount() == 1){
-                                ancMV = cV.getFloat(2);
-                                altMV = cV.getFloat(3);
-                                arMV = cV.getFloat(4);
-                                nPG = cV.getInt(5);
-                            }else {
-                                if (ancMV == 0 && altMV == 0 && ancMen == 0 && altMen == 0){
-                                    ancMV = cV.getFloat(2);
-                                    altMV = cV.getFloat(3);
-                                    arMV = cV.getFloat(4);
-                                    nPG = cV.getInt(5);
-                                    ancMen = cV.getFloat(2);
-                                    altMen = cV.getFloat(3);
-                                    arMen = cV.getFloat(4);
-                                    nPP = cV.getInt(5);
-                                }else{
-                                    if (arMV < cV.getFloat(4)){
-                                        ancMV = cV.getFloat(2);
-                                        altMV = cV.getFloat(3);
-                                        arMV = cV.getFloat(4);
-                                        nPG = cV.getInt(5);
-                                    }
-                                    if (arMen > cV.getFloat(4)){
-                                        ancMen = cV.getFloat(2);
-                                        altMen = cV.getFloat(3);
-                                        arMen = cV.getFloat(4);
-                                        nPP = cV.getInt(5);
-                                    }
-                                }
+                            if (cursorVentanaGEI.getCount() == 1){
+                                anchoMayorVentana = cursorVentanaGEI.getFloat(2);
+                                altoMayorVentana = cursorVentanaGEI.getFloat(3);
+                                areaMayorVentana = cursorVentanaGEI.getFloat(4);
+                                numeroPisoMayorVentana = cursorVentanaGEI.getInt(5);
                             }
-                            arTV+=cV.getFloat(4);
-                        }while (cV.moveToNext());
-                        /*if (arT == 0){
-
-                        }else {
-                            pAb = (arTV/arT)*100;
-                        }*/
-                        bdP.insertarVentana1(idCasa,ancMV,altMV,arMV,nPG,ancMen,altMen,arMen,nPP,arTV,pAb);
-                    }else {
-                        bdP.insertarVentana1(idCasa,0,0,0,0,0,0,0,0,0,0);
-                    }
-                    cP = bdP.cargarDatosTablas(idCasa,"tblpuerta");
-
-                    ancM = 0;
-                    altM = 0;
-                    arM = 0;
-                    arT = 0;
-
-                    if (cP.moveToFirst()){
-                        do {
-                            if(ancM == 0 && altM == 0){
-                                ancM = cP.getFloat(2);
-                                altM = cP.getFloat(3);
-                                arM = cP.getFloat(4);
-                            }else {
-                                if(arM < cP.getFloat(4)){
-                                    ancM = cP.getFloat(2);
-                                    altM = cP.getFloat(3);
-                                    arM = cP.getFloat(4);
-                                }
+                            else if (anchoMayorVentana == 0 && altoMayorVentana == 0 && anchoMenorVentana == 0 && altoMenorVentana == 0){
+                                anchoMayorVentana = cursorVentanaGEI.getFloat(2);
+                                altoMayorVentana = cursorVentanaGEI.getFloat(3);
+                                areaMayorVentana = cursorVentanaGEI.getFloat(4);
+                                numeroPisoMayorVentana = cursorVentanaGEI.getInt(5);
+                                anchoMenorVentana = cursorVentanaGEI.getFloat(2);
+                                altoMenorVentana = cursorVentanaGEI.getFloat(3);
+                                areaMenorVentana = cursorVentanaGEI.getFloat(4);
+                                numeroPisoMenorVentana = cursorVentanaGEI.getInt(5);
                             }
-                            arT+=cP.getFloat(4);
-                        }while (cP.moveToNext());
-                        bdP.insertarPuerta1(idCasa,ancM,altM,arM,arT);
-                    }else {
-                        bdP.insertarPuerta1(idCasa,0,0,0,0);
+                            else if (areaMayorVentana < cursorVentanaGEI.getFloat(4)) {
+                                anchoMayorVentana = cursorVentanaGEI.getFloat(2);
+                                altoMayorVentana = cursorVentanaGEI.getFloat(3);
+                                areaMayorVentana = cursorVentanaGEI.getFloat(4);
+                                numeroPisoMayorVentana = cursorVentanaGEI.getInt(5);
+                            }
+                            if (areaMenorVentana > cursorVentanaGEI.getFloat(4)){
+                                anchoMenorVentana = cursorVentanaGEI.getFloat(2);
+                                altoMenorVentana = cursorVentanaGEI.getFloat(3);
+                                areaMenorVentana = cursorVentanaGEI.getFloat(4);
+                                numeroPisoMenorVentana = cursorVentanaGEI.getInt(5);
+                            }
+                            areaTotalVentana += cursorVentanaGEI.getFloat(4);
+                        }while (cursorVentanaGEI.moveToNext());
+
+                        bdP.insertarVentana1_ID(idCasa,anchoMayorVentana,altoMayorVentana,areaMayorVentana,numeroPisoMayorVentana,anchoMenorVentana,altoMenorVentana,areaMenorVentana,numeroPisoMenorVentana,areaTotalVentana,porcentajeAberturas);
+                    }else{
+                        bdP.insertarVentana1_ID(idCasa,0,0,0,0,0,0,0,0,0,0);
                     }
 
-                }while (cursor.moveToNext());
+                    cursorPuertaGEI = bdP.cargarDatos_ID_RID(idCasa,"tblpuerta");
+
+                    float anchoMayorPuerta = 0,
+                          altoMayorPuerta = 0,
+                          areaMayorPuerta = 0,
+                          areaTotalPuerta = 0;
+
+                    if (cursorPuertaGEI.moveToFirst()){
+                        do {
+                            if(anchoMayorPuerta == 0 && altoMayorPuerta == 0){
+                                anchoMayorPuerta = cursorPuertaGEI.getFloat(2);
+                                altoMayorPuerta = cursorPuertaGEI.getFloat(3);
+                                areaMayorPuerta = cursorPuertaGEI.getFloat(4);
+                            }else {
+                                if(areaMayorPuerta < cursorPuertaGEI.getFloat(4)){
+                                    anchoMayorPuerta = cursorPuertaGEI.getFloat(2);
+                                    altoMayorPuerta = cursorPuertaGEI.getFloat(3);
+                                    areaMayorPuerta = cursorPuertaGEI.getFloat(4);
+                                }
+                            }
+                            areaTotalPuerta += cursorPuertaGEI.getFloat(4);
+                        }while (cursorPuertaGEI.moveToNext());
+
+                        bdP.insertarPuerta1_ID(idCasa,anchoMayorPuerta,altoMayorPuerta,areaMayorPuerta,areaTotalPuerta);
+                    }else {
+                        bdP.insertarPuerta1_ID(idCasa,0,0,0,0);
+                    }
+                }while (cursorGEI.moveToNext());
             }
-
         }catch (Exception e){
             Toast toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
             toast.show();
@@ -579,10 +518,13 @@ public class MapsActivity extends AppCompatActivity
         bdP.cerrarBD();
     }
 
-    public void extras(){
+    public void menuGestionCasas(){
+
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+
             @Override
             public boolean onMarkerClick(Marker marker) {
+
                 final Marker m = marker;
                 latitud = Double.toString(setLatitud(m));
                 longitud = Double.toString(setLongitud(m));
@@ -598,130 +540,152 @@ public class MapsActivity extends AppCompatActivity
                 items[3] = "Fijar Camara";
 
                 builder.setTitle("Opciones")
-                        .setItems(items, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                switch (which){
-                                    case 0:
-                                        m.remove();
-                                        break;
-                                    case 1:
-                                        if(bdP.existeRegistro("tblcasa",idCasa)){
-                                            AlertDialog.Builder builder1 = new AlertDialog.Builder(context);
+                       .setItems(items, new DialogInterface.OnClickListener() {
 
-                                            builder1.setTitle("Registro existente")
-                                                    .setMessage("Ya hay una vivienda registrada con estas coordenadas ¿Desea modificar su registro?")
-                                                    .setPositiveButton("Si",
-                                                            new DialogInterface.OnClickListener() {
-                                                                @Override
-                                                                public void onClick(DialogInterface dialog, int which) {
-                                                                    instanciarCasa(idCasa);
-                                                                }
-                                                            })
-                                                    .setNegativeButton("No",
-                                                            new DialogInterface.OnClickListener() {
-                                                                @Override
-                                                                public void onClick(DialogInterface dialog, int which) {}
-                                                            });
-                                            builder1.create().show();
-                                        }
-                                        else {
-                                            Toast toast;
-                                            try {
-                                                bdP.abrirBD();
-                                                long insert = bdP.insertarCasa(latitud,longitud,zonas());
-                                                bdP.cerrarBD();
-                                                idCasa = bdP.getIdCasa(latitud,longitud);
-                                                instanciarCasa(idCasa);
-                                            } catch (Exception e) {
+                           @Override
+                           public void onClick(DialogInterface dialog, int which){
+                               switch (which){
+                                   case 0:
+                                       m.remove();
+                                       break;
+
+                                   case 1:
+                                       if (bdP.existeRegistro_ID("tblcasa",idCasa)){
+                                           AlertDialog.Builder builder1 = new AlertDialog.Builder(context);
+
+                                           builder1.setTitle("Registro existente")
+                                                   .setMessage("Ya hay una vivienda registrada con estas coordenadas ¿Desea modificar su registro?")
+                                                   .setPositiveButton("Si", new DialogInterface.OnClickListener() {
+
+                                                       @Override
+                                                       public void onClick(DialogInterface dialog, int which) {
+                                                           instanciarCasa(idCasa);
+                                                       }
+                                                   })
+                                                   .setNegativeButton("No", new DialogInterface.OnClickListener() {
+
+                                                       @Override
+                                                       public void onClick(DialogInterface dialog, int which) {}
+                                                   });
+                                           builder1.create().show();
+                                       }
+                                       else {
+                                           Toast toast;
+                                           try {
+                                               if (hayCasas() == false){
+                                                   numeral = 0;
+                                                   idCasa = concatenarPK(numeral);
+
+                                                   bdP.abrirBD();
+                                                   bdP.insertarCasa(idCasa,latitud,longitud,zonas());
+                                                   bdP.cerrarBD();
+                                               }else {
+                                                   bdP.abrirBD();
+                                                   Cursor cursorCasa = bdP.cargarDatos("tblcasa");
+                                                   cursorCasa.moveToLast();
+                                                   descomponerPK(cursorCasa.getString(0));
+                                                   idCasa = concatenarPK(numeral);
+
+                                                   bdP.insertarCasa(idCasa,latitud,longitud,zonas());
+                                                   bdP.cerrarBD();
+                                               }
+                                               instanciarCasa(idCasa);
+                                           } catch (Exception e) {
                                                 toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
                                                 toast.show();
-                                            }
+                                           }
+                                       }
+                                       break;
 
-                                        }
-                                        break;
-                                    case 2:
-                                        AlertDialog.Builder builder1 = new AlertDialog.Builder(context);
+                                   case 2:
+                                       AlertDialog.Builder builder1 = new AlertDialog.Builder(context);
 
-                                        builder1.setTitle("Eliminar Casa")
-                                                .setMessage("¿Esta seguro que desea eliminar los registros de la casa seleccionada?")
-                                                .setPositiveButton("Si",
-                                                        new DialogInterface.OnClickListener() {
-                                                            @Override
-                                                            public void onClick(DialogInterface dialog, int which) {
-                                                                try {
-                                                                    if (bdP.existeRegistro("tblcasa",idCasa)){
-                                                                        bdP.eliminarRegistro("tblcasa",idCasa);
-                                                                        if (bdP.existeRegistro("tblondachoque",idCasa)){
-                                                                            bdP.eliminarRegistro("tblondachoque",idCasa);
-                                                                        }
-                                                                        if (bdP.existeRegistro("tblfachada",idCasa)){
-                                                                            bdP.eliminarRegistro("tblfachada",idCasa);
-                                                                        }
-                                                                        if (bdP.existeRegistro("tblfachada1",idCasa)){
-                                                                            bdP.eliminarRegistro("tblfachada1",idCasa);
-                                                                        }
-                                                                        if (bdP.existeRegistro("tblventana",idCasa)){
-                                                                            bdP.eliminarRegistro("tblventana",idCasa);
-                                                                        }
-                                                                        if (bdP.existeRegistro("tblventana1",idCasa)){
-                                                                            bdP.eliminarRegistro("tblventana1",idCasa);
-                                                                        }
-                                                                        if (bdP.existeRegistro("tblpuerta",idCasa)){
-                                                                            bdP.eliminarRegistro("tblpuerta",idCasa);
-                                                                        }
-                                                                        if (bdP.existeRegistro("tblpuerta1",idCasa)){
-                                                                            bdP.eliminarRegistro("tblpuerta1",idCasa);
-                                                                        }
-                                                                        if (bdP.existeRegistro("tbllahares",idCasa)){
-                                                                            bdP.eliminarRegistro("tbllahares",idCasa);
-                                                                        }
-                                                                        if (bdP.existeRegistro("tblCeniza",idCasa)){
-                                                                            bdP.eliminarRegistro("tblCeniza",idCasa);
-                                                                        }
-                                                                    }
-                                                                    m.remove();
-                                                                } catch (Exception e) {
-                                                                    Log.i("EliminarCasa",e.toString());
-                                                                    Toast toast;
-                                                                    toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
-                                                                    toast.show();
-                                                                }
-                                                            }
-                                                        })
-                                                .setNegativeButton("No",
-                                                        new DialogInterface.OnClickListener() {
-                                                            @Override
-                                                            public void onClick(DialogInterface dialog, int which) {}
-                                                        });
-                                        builder1.create().show();
-                                        break;
-                                    case 3:
-                                        try {
-                                            bdP.insertarCamara(latitud,longitud);
-                                        }
-                                        catch (Exception e){
-                                            Toast toast;
-                                            toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
-                                            toast.show();
-                                        }
-                                        break;
-                                }
-                            }
-                        });
+                                       builder1.setTitle("Eliminar Casa")
+                                               .setMessage("¿Esta seguro que desea eliminar los registros de la casa seleccionada?")
+                                               .setPositiveButton("Si", new DialogInterface.OnClickListener() {
 
+                                                   @Override
+                                                   public void onClick(DialogInterface dialog, int which) {
+                                                       try {
+                                                           if (bdP.existeRegistro_ID("tblcasa",idCasa)){
+                                                               bdP.eliminarRegistro_ID("tblcasa",idCasa);
+
+                                                               if (bdP.existeRegistro_ID("tblondachoque",idCasa)){
+                                                                   bdP.eliminarRegistro_ID("tblondachoque",idCasa);
+                                                               }
+
+                                                               if (bdP.existeRegistro_ID("tblfachada",idCasa)){
+                                                                   bdP.eliminarRegistro_ID("tblfachada",idCasa);
+                                                               }
+
+                                                               if (bdP.existeRegistro_ID("tblfachada1",idCasa)){
+                                                                   bdP.eliminarRegistro_ID("tblfachada1",idCasa);
+                                                               }
+
+                                                               if (bdP.existeRegistro_ID("tblventana",idCasa)){
+                                                                   bdP.eliminarRegistro_ID("tblventana",idCasa);
+                                                               }
+
+                                                               if (bdP.existeRegistro_ID("tblventana1",idCasa)){
+                                                                   bdP.eliminarRegistro_ID("tblventana1",idCasa);
+                                                               }
+
+                                                               if (bdP.existeRegistro_ID("tblpuerta",idCasa)){
+                                                                   bdP.eliminarRegistro_ID("tblpuerta",idCasa);
+                                                               }
+
+                                                               if (bdP.existeRegistro_ID("tblpuerta1",idCasa)){
+                                                                   bdP.eliminarRegistro_ID("tblpuerta1",idCasa);
+                                                               }
+
+                                                               if (bdP.existeRegistro_ID("tbllahares",idCasa)){
+                                                                   bdP.eliminarRegistro_ID("tbllahares",idCasa);
+                                                               }
+
+                                                               if (bdP.existeRegistro_ID("tblCeniza",idCasa)){
+                                                                   bdP.eliminarRegistro_ID("tblCeniza",idCasa);
+                                                               }
+                                                           }
+                                                           m.remove();
+                                                       } catch (Exception e) {
+                                                           Toast toast;
+                                                           toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
+                                                           toast.show();
+                                                       }
+                                                   }
+                                               })
+                                               .setNegativeButton("No", new DialogInterface.OnClickListener() {
+
+                                                   @Override
+                                                   public void onClick(DialogInterface dialog, int which) {}
+                                               });
+                                       builder1.create().show();
+                                       break;
+
+                                   case 3:
+                                       try {
+                                           bdP.insertarCamara(latitud,longitud);
+                                       }
+                                       catch (Exception e){
+                                           Toast toast;
+                                           toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
+                                           toast.show();
+                                       }
+                                       break;
+                               }
+                           }
+                       });
                 builder.create();
                 builder.show();
-
                 return false;
             }
         });
     }
 
-    public void instanciarCasa(int idCasa){
+    public void instanciarCasa(String idCasa){
         Intent i = new Intent(MapsActivity.this, FormulariosActivity.class);
         Bundle bundle = new Bundle();
-        bundle.putInt("idcasa",idCasa);
+        bundle.putString("idcasa",idCasa);
 
         i.putExtras(bundle);
         startActivity(i);
@@ -766,7 +730,7 @@ public class MapsActivity extends AppCompatActivity
 
     public void fijarZona(){
         try {
-            bdP.insertar(spCorregimiento.getSelectedItem().toString(),spSector.getSelectedItemPosition());
+            bdP.insertarZona(spCorregimiento.getSelectedItem().toString(),spSector.getSelectedItemPosition());
         }
         catch (Exception e){
             Toast toast;
@@ -788,18 +752,18 @@ public class MapsActivity extends AppCompatActivity
 
     public void cargarZona(){
         bdP.abrirBD();
-        Cursor cursor = bdP.cargarDatos("corregimiento","sector","tblzona");
+        Cursor cursor = bdP.cargarDatos2P("corregimiento","sector","tblzona");
         cursor.moveToFirst();
-        String c;
-        int s;
+        String corregimiento;
+        int sector;
         do {
-            c = cursor.getString(0);
-            s = cursor.getInt(1);
+            corregimiento = cursor.getString(0);
+            sector = cursor.getInt(1);
         }while (cursor.moveToNext());
         bdP.cerrarBD();
 
-        asignarCorregimiento(c);
-        spSector.setSelection(s);
+        asignarCorregimiento(corregimiento);
+        spSector.setSelection(sector);
     }
 
     @Override
@@ -808,8 +772,9 @@ public class MapsActivity extends AppCompatActivity
         cargarDatos();
 
         switch (spSector.getSelectedItem().toString()){
+
             case "":
-                Cursor cursor = bdP.cargarDatos("latitud","longitud","tblcamara");
+                Cursor cursor = bdP.cargarDatos2P("latitud","longitud","tblcamara");
 
                 if (cursor.moveToFirst()){
                     do {
@@ -818,141 +783,158 @@ public class MapsActivity extends AppCompatActivity
                     }while (cursor.moveToNext());
                 }
                 break;
+
             case "Sector FA":
                 pOpFSA = new PolygonOptions()
                         .add(new LatLng(1.297758, -77.404716),
-                                new LatLng(1.299492, -77.404890),
-                                new LatLng(1.299807, -77.404562),
-                                new LatLng(1.299816, -77.402587),
-                                new LatLng(1.298172, -77.402851),
-                                new LatLng(1.297664, -77.404094),
-                                new LatLng(1.297855, -77.404143))
+                             new LatLng(1.299492, -77.404890),
+                             new LatLng(1.299807, -77.404562),
+                             new LatLng(1.299816, -77.402587),
+                             new LatLng(1.298172, -77.402851),
+                             new LatLng(1.297664, -77.404094),
+                             new LatLng(1.297855, -77.404143))
                         .strokeColor(Color.RED)
                         .strokeWidth(3);
+
                 camara = new LatLng(1.299816, -77.402587);
                 mMap.addPolygon(pOpFSA);
                 sector = 'a';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,16));
                 break;
+
             case "Sector RA":
                 pOpRSA = new PolygonOptions()
                         .add(new LatLng(1.3410625,-77.4189109),
-                                new LatLng(1.3408158,-77.4193829),
-                                new LatLng(1.3404136,-77.4196887),
-                                new LatLng(1.3399792,-77.4199462),
-                                new LatLng(1.3376892,-77.418809),
-                                new LatLng(1.338086,-77.4179399),
-                                new LatLng(1.3403921,-77.4183798))
+                             new LatLng(1.3408158,-77.4193829),
+                             new LatLng(1.3404136,-77.4196887),
+                             new LatLng(1.3399792,-77.4199462),
+                             new LatLng(1.3376892,-77.418809),
+                             new LatLng(1.338086,-77.4179399),
+                             new LatLng(1.3403921,-77.4183798))
                         .strokeColor(Color.BLUE)
                         .strokeWidth(3);
+
                 camara = new LatLng(1.3394682268,-77.4189103679);
                 mMap.addPolygon(pOpRSA);
                 sector = 'a';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector RB":
                 pOpRSB = new PolygonOptions()
                         .add(new LatLng(1.3408694,-77.4193937),
-                                new LatLng(1.342666,-77.4196887),
-                                new LatLng(1.3424891,-77.420429),
-                                new LatLng(1.342001,-77.4203324),
-                                new LatLng(1.3408212,-77.4205363),
-                                new LatLng(1.3401562,-77.4198872))
+                             new LatLng(1.342666,-77.4196887),
+                             new LatLng(1.3424891,-77.420429),
+                             new LatLng(1.342001,-77.4203324),
+                             new LatLng(1.3408212,-77.4205363),
+                             new LatLng(1.3401562,-77.4198872))
                         .strokeColor(Color.CYAN)
                         .strokeWidth(3);
+
                 camara = new LatLng(1.3415374697,-77.4199251444);
                 mMap.addPolygon(pOpRSB);
                 sector = 'b';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,18));
                 break;
+
             case "Sector RC":
                 pOpRSC = new PolygonOptions()
                         .add(new LatLng(1.3425802,-77.4201232),
-                                new LatLng(1.3427787,-77.4197853),
-                                new LatLng(1.3451008,-77.4190342),
-                                new LatLng(1.3463236,-77.4186587),
-                                new LatLng(1.3477662,-77.4197048),
-                                new LatLng(1.3475678,-77.4207079),
-                                new LatLng(1.3468438,-77.4206436),
-                                new LatLng(1.3466024,-77.4205953),
-                                new LatLng(1.346404,-77.4197102),
-                                new LatLng(1.3427572,-77.4205363),
-                                new LatLng(1.3425588,-77.4202949))
+                             new LatLng(1.3427787,-77.4197853),
+                             new LatLng(1.3451008,-77.4190342),
+                             new LatLng(1.3463236,-77.4186587),
+                             new LatLng(1.3477662,-77.4197048),
+                             new LatLng(1.3475678,-77.4207079),
+                             new LatLng(1.3468438,-77.4206436),
+                             new LatLng(1.3466024,-77.4205953),
+                             new LatLng(1.346404,-77.4197102),
+                             new LatLng(1.3427572,-77.4205363),
+                             new LatLng(1.3425588,-77.4202949))
                         .strokeColor(Color.MAGENTA)
                         .strokeWidth(3);
+
                 camara = new LatLng(1.3452881125,-77.4195969187);
                 mMap.addPolygon(pOpRSC);
                 sector = 'c';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector RD":
                 pOpRSD = new PolygonOptions()
                         .add(new LatLng(1.3475249,-77.4207187),
-                                new LatLng(1.3479888,-77.4209145),
-                                new LatLng(1.3478439,-77.4213946),
-                                new LatLng(1.3476669,-77.4218425),
-                                new LatLng(1.3470905,-77.4217004),
-                                new LatLng(1.3467419,-77.420665))
+                             new LatLng(1.3479888,-77.4209145),
+                             new LatLng(1.3478439,-77.4213946),
+                             new LatLng(1.3476669,-77.4218425),
+                             new LatLng(1.3470905,-77.4217004),
+                             new LatLng(1.3467419,-77.420665))
                         .strokeColor(Color.RED)
                         .strokeWidth(3);
+
                 camara = new LatLng(1.3474422261,-77.4211804527);
                 mMap.addPolygon(pOpRSD);
                 sector = 'd';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,18));
                 break;
+
             case "Sector RE":
                 pOpRSE = new PolygonOptions()
                         .add(new LatLng(1.3487932,-77.4217781),
-                                new LatLng(1.3485277,-77.4218827),
-                                new LatLng(1.3476991,-77.4217808),
-                                new LatLng(1.3479137,-77.4211586),
-                                new LatLng(1.3486108,-77.4210164))
+                             new LatLng(1.3485277,-77.4218827),
+                             new LatLng(1.3476991,-77.4217808),
+                             new LatLng(1.3479137,-77.4211586),
+                             new LatLng(1.3486108,-77.4210164))
                         .strokeColor(Color.WHITE)
                         .strokeWidth(3);
+
                 camara = new LatLng(1.3483590297,-77.4214654691);
                 mMap.addPolygon(pOpRSE);
                 sector = 'e';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,19));
                 break;
+
             case "Sector RF":
                 pOpRSF = new PolygonOptions()
                         .add(new LatLng(1.3487932,-77.4217057),
-                                new LatLng(1.3486162,-77.4210003),
-                                new LatLng(1.3494287,-77.4206704),
-                                new LatLng(1.3523729,-77.4201393),
-                                new LatLng(1.352558,-77.4208179),
-                                new LatLng(1.3522335,-77.422092))
+                             new LatLng(1.3486162,-77.4210003),
+                             new LatLng(1.3494287,-77.4206704),
+                             new LatLng(1.3523729,-77.4201393),
+                             new LatLng(1.352558,-77.4208179),
+                             new LatLng(1.3522335,-77.422092))
                         .strokeColor(Color.YELLOW)
                         .strokeWidth(3);
+
                 camara = new LatLng(1.3507437258,-77.4210808658);
                 mMap.addPolygon(pOpRSF);
                 sector = 'f';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector RG":
                 pOpRSG = new PolygonOptions()
                         .add(new LatLng(1.3493536,-77.422049),
-                                new LatLng(1.3480772,-77.4230736),
-                                new LatLng(1.347187,-77.4225801),
-                                new LatLng(1.3475141,-77.4218184),
-                                new LatLng(1.3481523,-77.4218988),
-                                new LatLng(1.3485224,-77.4219364),
-                                new LatLng(1.3489192,-77.4217594))
+                             new LatLng(1.3480772,-77.4230736),
+                             new LatLng(1.347187,-77.4225801),
+                             new LatLng(1.3475141,-77.4218184),
+                             new LatLng(1.3481523,-77.4218988),
+                             new LatLng(1.3485224,-77.4219364),
+                             new LatLng(1.3489192,-77.4217594))
                         .strokeColor(Color.LTGRAY)
                         .strokeWidth(3);
+
                 camara = new LatLng(1.3482122129,-77.4222849837);
                 mMap.addPolygon(pOpRSG);
                 sector = 'g';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,18));
                 break;
+
             case "Sector ROA":
                 pOpRoSA = new PolygonOptions()
                         .add(new LatLng(1.3126441,-77.4355406),
-                                new LatLng(1.3119093,-77.4360341),
-                                new LatLng(1.311121,-77.4353957),
-                                new LatLng(1.3115447,-77.4346823),
-                                new LatLng(1.3123062,-77.434237),
-                                new LatLng(1.313234,-77.4347252))
+                             new LatLng(1.3119093,-77.4360341),
+                             new LatLng(1.311121,-77.4353957),
+                             new LatLng(1.3115447,-77.4346823),
+                             new LatLng(1.3123062,-77.434237),
+                             new LatLng(1.313234,-77.4347252))
                         .strokeColor(Color.BLUE)
                         .strokeWidth(3);
 
@@ -961,14 +943,15 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'a';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,18));
                 break;
+
             case "Sector ROB":
                 pOpRoSB = new PolygonOptions()
                         .add(new LatLng(1.3123062,-77.434237),
-                                new LatLng(1.3115447,-77.4346823),
-                                new LatLng(1.3102736,-77.4336416),
-                                new LatLng(1.3111371,-77.4324614),
-                                new LatLng(1.3123759,-77.4322093),
-                                new LatLng(1.3131053,-77.4329603))
+                             new LatLng(1.3115447,-77.4346823),
+                             new LatLng(1.3102736,-77.4336416),
+                             new LatLng(1.3111371,-77.4324614),
+                             new LatLng(1.3123759,-77.4322093),
+                             new LatLng(1.3131053,-77.4329603))
                         .strokeColor(Color.CYAN)
                         .strokeWidth(3);
 
@@ -977,23 +960,24 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'b';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector ROC":
                 pOpRoSC = new PolygonOptions()
                         .add(new LatLng(1.3126119,-77.4318874),
-                                new LatLng(1.3113677,-77.4322093),
-                                new LatLng(1.3108636,-77.4327135),
-                                new LatLng(1.3092225,-77.4337113),
-                                new LatLng(1.3086325,-77.4323702),
-                                new LatLng(1.3095443,-77.4308038),
-                                new LatLng(1.3103487,-77.4306482),
-                                new LatLng(1.3105793,-77.4305838),
-                                new LatLng(1.3108207,-77.4305087),
-                                new LatLng(1.3109762,-77.4304926),
-                                new LatLng(1.3112122,-77.4304873),
-                                new LatLng(1.3114106,-77.4304497),
-                                new LatLng(1.3116466,-77.4304444),
-                                new LatLng(1.3119093,-77.4304229),
-                                new LatLng(1.3121614,-77.430439))
+                             new LatLng(1.3113677,-77.4322093),
+                             new LatLng(1.3108636,-77.4327135),
+                             new LatLng(1.3092225,-77.4337113),
+                             new LatLng(1.3086325,-77.4323702),
+                             new LatLng(1.3095443,-77.4308038),
+                             new LatLng(1.3103487,-77.4306482),
+                             new LatLng(1.3105793,-77.4305838),
+                             new LatLng(1.3108207,-77.4305087),
+                             new LatLng(1.3109762,-77.4304926),
+                             new LatLng(1.3112122,-77.4304873),
+                             new LatLng(1.3114106,-77.4304497),
+                             new LatLng(1.3116466,-77.4304444),
+                             new LatLng(1.3119093,-77.4304229),
+                             new LatLng(1.3121614,-77.430439))
                         .strokeColor(Color.MAGENTA)
                         .strokeWidth(3);
 
@@ -1002,14 +986,15 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'c';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector ROD":
                 pOpRoSD = new PolygonOptions()
                         .add(new LatLng(1.3122419,-77.4304283),
-                                new LatLng(1.3113918,-77.4303719),
-                                new LatLng(1.3097373,-77.4289155),
-                                new LatLng(1.3109708,-77.4279606),
-                                new LatLng(1.3123759,-77.428894),
-                                new LatLng(1.3127621,-77.4292481))
+                             new LatLng(1.3113918,-77.4303719),
+                             new LatLng(1.3097373,-77.4289155),
+                             new LatLng(1.3109708,-77.4279606),
+                             new LatLng(1.3123759,-77.428894),
+                             new LatLng(1.3127621,-77.4292481))
                         .strokeColor(Color.RED)
                         .strokeWidth(3);
 
@@ -1018,12 +1003,13 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'd';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector ROE":
                 pOpRoSE = new PolygonOptions()
                         .add(new LatLng(1.3109708,-77.4279606),
-                                new LatLng(1.309555,-77.4290335),
-                                new LatLng(1.3060261,-77.4280787),
-                                new LatLng(1.3069593,-77.4265873))
+                             new LatLng(1.309555,-77.4290335),
+                             new LatLng(1.3060261,-77.4280787),
+                             new LatLng(1.3069593,-77.4265873))
                         .strokeColor(Color.WHITE)
                         .strokeWidth(3);
 
@@ -1032,14 +1018,15 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'e';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector ROF":
                 pOpRoSF = new PolygonOptions()
                         .add(new LatLng(1.310885,-77.4270594),
-                                new LatLng(1.3101556,-77.4264801),
-                                new LatLng(1.3095014,-77.4250317),
-                                new LatLng(1.3107563,-77.4243128),
-                                new LatLng(1.3134914,-77.4244845),
-                                new LatLng(1.3126655,-77.4274671))
+                             new LatLng(1.3101556,-77.4264801),
+                             new LatLng(1.3095014,-77.4250317),
+                             new LatLng(1.3107563,-77.4243128),
+                             new LatLng(1.3134914,-77.4244845),
+                             new LatLng(1.3126655,-77.4274671))
                         .strokeColor(Color.YELLOW)
                         .strokeWidth(3);
 
@@ -1048,14 +1035,15 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'f';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector ROG":
                 pOpRoSG = new PolygonOptions()
                         .add(new LatLng(1.3097695,-77.4272418),
-                                new LatLng(1.3078388,-77.4267375),
-                                new LatLng(1.3066482,-77.4259651),
-                                new LatLng(1.3071738,-77.4245274),
-                                new LatLng(1.3092547,-77.424463),
-                                new LatLng(1.310102,-77.427156))
+                             new LatLng(1.3078388,-77.4267375),
+                             new LatLng(1.3066482,-77.4259651),
+                             new LatLng(1.3071738,-77.4245274),
+                             new LatLng(1.3092547,-77.424463),
+                             new LatLng(1.310102,-77.427156))
                         .strokeColor(Color.LTGRAY)
                         .strokeWidth(3);
 
@@ -1064,14 +1052,15 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'g';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector ROH":
                 pOpRoSH = new PolygonOptions()
                         .add(new LatLng(1.3094155,-77.4364042),
-                                new LatLng(1.3073991,-77.4356639),
-                                new LatLng(1.3064873,-77.4318552),
-                                new LatLng(1.3075278,-77.4314904),
-                                new LatLng(1.3083537,-77.4343765),
-                                new LatLng(1.3098017,-77.4349773))
+                             new LatLng(1.3073991,-77.4356639),
+                             new LatLng(1.3064873,-77.4318552),
+                             new LatLng(1.3075278,-77.4314904),
+                             new LatLng(1.3083537,-77.4343765),
+                             new LatLng(1.3098017,-77.4349773))
                         .strokeColor(Color.GREEN)
                         .strokeWidth(3);
 
@@ -1080,14 +1069,15 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'h';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,16));
                 break;
+
             case "Sector ROI":
                 pOpRoSI = new PolygonOptions()
                         .add(new LatLng(1.3075439,-77.4314046),
-                                new LatLng(1.3059939,-77.431941),
-                                new LatLng(1.3024007,-77.4245167),
-                                new LatLng(1.3042885,-77.4234116),
-                                new LatLng(1.3059296,-77.4246669),
-                                new LatLng(1.3043636,-77.426995))
+                             new LatLng(1.3059939,-77.431941),
+                             new LatLng(1.3024007,-77.4245167),
+                             new LatLng(1.3042885,-77.4234116),
+                             new LatLng(1.3059296,-77.4246669),
+                             new LatLng(1.3043636,-77.426995))
                         .strokeColor(Color.parseColor("#6C3483"))
                         .strokeWidth(3);
 
@@ -1096,18 +1086,19 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'i';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,15));
                 break;
+
             case "Sector TA":
                 pOpTSA = new PolygonOptions()
                         .add(new LatLng(1.3576527,-77.3159033),
-                                new LatLng(1.3573041,-77.3154688),
-                                new LatLng(1.3572425,-77.3155144),
-                                new LatLng(1.3568563,-77.3148841),
-                                new LatLng(1.3567491,-77.3149699),
-                                new LatLng(1.3564219,-77.3145086),
-                                new LatLng(1.3570172,-77.3140794),
-                                new LatLng(1.3573176,-77.3145515),
-                                new LatLng(1.3579289,-77.3141116),
-                                new LatLng(1.3585725,-77.3149431))
+                             new LatLng(1.3573041,-77.3154688),
+                             new LatLng(1.3572425,-77.3155144),
+                             new LatLng(1.3568563,-77.3148841),
+                             new LatLng(1.3567491,-77.3149699),
+                             new LatLng(1.3564219,-77.3145086),
+                             new LatLng(1.3570172,-77.3140794),
+                             new LatLng(1.3573176,-77.3145515),
+                             new LatLng(1.3579289,-77.3141116),
+                             new LatLng(1.3585725,-77.3149431))
                         .strokeColor(Color.BLUE)
                         .strokeWidth(3);
 
@@ -1116,16 +1107,17 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'a';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,18));
                 break;
+
             case "Sector TB":
                 pOpTSB = new PolygonOptions()
                         .add(new LatLng(1.3564702,-77.3172873),
-                                new LatLng(1.3549525,-77.3163754),
-                                new LatLng(1.3564434,-77.3145783),
-                                new LatLng(1.3567491,-77.3149967),
-                                new LatLng(1.356851,-77.3149243),
-                                new LatLng(1.3572425,-77.3155466),
-                                new LatLng(1.3573041,-77.3155037),
-                                new LatLng(1.3575777,-77.3158604))
+                             new LatLng(1.3549525,-77.3163754),
+                             new LatLng(1.3564434,-77.3145783),
+                             new LatLng(1.3567491,-77.3149967),
+                             new LatLng(1.356851,-77.3149243),
+                             new LatLng(1.3572425,-77.3155466),
+                             new LatLng(1.3573041,-77.3155037),
+                             new LatLng(1.3575777,-77.3158604))
                         .strokeColor(Color.CYAN)
                         .strokeWidth(3);
 
@@ -1134,16 +1126,17 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'b';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector TC":
                 pOpTSC = new PolygonOptions()
                         .add(new LatLng(1.3564568,-77.3173168),
-                                new LatLng(1.3570387,-77.3176575),
-                                new LatLng(1.3555934,-77.3194385),
-                                new LatLng(1.3551322,-77.3192346),
-                                new LatLng(1.3551348,-77.3191944),
-                                new LatLng(1.3539282,-77.3185319),
-                                new LatLng(1.3541105,-77.3172122),
-                                new LatLng(1.3549525,-77.3164022))
+                             new LatLng(1.3570387,-77.3176575),
+                             new LatLng(1.3555934,-77.3194385),
+                             new LatLng(1.3551322,-77.3192346),
+                             new LatLng(1.3551348,-77.3191944),
+                             new LatLng(1.3539282,-77.3185319),
+                             new LatLng(1.3541105,-77.3172122),
+                             new LatLng(1.3549525,-77.3164022))
                         .strokeColor(Color.MAGENTA)
                         .strokeWidth(3);
 
@@ -1152,17 +1145,18 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'c';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector TD":
                 pOpTSD = new PolygonOptions()
                         .add(new LatLng(1.3554834,-77.3204416),
-                                new LatLng(1.3549311,-77.3211604),
-                                new LatLng(1.3543411,-77.3209646),
-                                new LatLng(1.3543921,-77.3207742),
-                                new LatLng(1.3532525,-77.3202753),
-                                new LatLng(1.3539845,-77.3185855),
-                                new LatLng(1.3551161,-77.3192024),
-                                new LatLng(1.3551107,-77.31924),
-                                new LatLng(1.3558642,-77.3195565))
+                             new LatLng(1.3549311,-77.3211604),
+                             new LatLng(1.3543411,-77.3209646),
+                             new LatLng(1.3543921,-77.3207742),
+                             new LatLng(1.3532525,-77.3202753),
+                             new LatLng(1.3539845,-77.3185855),
+                             new LatLng(1.3551161,-77.3192024),
+                             new LatLng(1.3551107,-77.31924),
+                             new LatLng(1.3558642,-77.3195565))
                         .strokeColor(Color.RED)
                         .strokeWidth(3);
 
@@ -1171,17 +1165,18 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'd';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector TE":
                 pOpTSE = new PolygonOptions()
                         .add(new LatLng(1.3542526,-77.3229522),
-                                new LatLng(1.3532632,-77.3226196),
-                                new LatLng(1.3533061,-77.3217049),
-                                new LatLng(1.3527001,-77.3215038),
-                                new LatLng(1.3531238,-77.3202324),
-                                new LatLng(1.3543411,-77.3207742),
-                                new LatLng(1.3542714,-77.3210424),
-                                new LatLng(1.354856,-77.3212624),
-                                new LatLng(1.3546307,-77.3224533))
+                             new LatLng(1.3532632,-77.3226196),
+                             new LatLng(1.3533061,-77.3217049),
+                             new LatLng(1.3527001,-77.3215038),
+                             new LatLng(1.3531238,-77.3202324),
+                             new LatLng(1.3543411,-77.3207742),
+                             new LatLng(1.3542714,-77.3210424),
+                             new LatLng(1.354856,-77.3212624),
+                             new LatLng(1.3546307,-77.3224533))
                         .strokeColor(Color.WHITE)
                         .strokeWidth(3);
 
@@ -1190,13 +1185,14 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'e';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector MA":
                 pOpMSA = new PolygonOptions()
                         .add(new LatLng(1.3744949,-77.3325115),
-                                new LatLng(1.3737119,-77.3357946),
-                                new LatLng(1.373122,-77.3365617),
-                                new LatLng(1.3725804,-77.3360145),
-                                new LatLng(1.3739801,-77.3322541))
+                             new LatLng(1.3737119,-77.3357946),
+                             new LatLng(1.373122,-77.3365617),
+                             new LatLng(1.3725804,-77.3360145),
+                             new LatLng(1.3739801,-77.3322541))
                         .strokeColor(Color.BLUE)
                         .strokeWidth(3);
 
@@ -1205,13 +1201,14 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'a';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,16));
                 break;
+
             case "Sector MB":
                 pOpMSB = new PolygonOptions()
                         .add(new LatLng(1.373004,-77.3365134),
-                                new LatLng(1.3727091,-77.3371196),
-                                new LatLng(1.3718778,-77.337538),
-                                new LatLng(1.3714649,-77.3366314),
-                                new LatLng(1.3725911,-77.3360735))
+                             new LatLng(1.3727091,-77.3371196),
+                             new LatLng(1.3718778,-77.337538),
+                             new LatLng(1.3714649,-77.3366314),
+                             new LatLng(1.3725911,-77.3360735))
                         .strokeColor(Color.CYAN)
                         .strokeWidth(3);
 
@@ -1220,14 +1217,15 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'b';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,18));
                 break;
+
             case "Sector MC":
                 pOpMSC = new PolygonOptions()
                         .add(new LatLng(1.3718778,-77.337538),
-                                new LatLng(1.373181,-77.3368996),
-                                new LatLng(1.3739479,-77.3372805),
-                                new LatLng(1.3737226,-77.3386592),
-                                new LatLng(1.3724785,-77.3390025),
-                                new LatLng(1.3721299,-77.3380637))
+                             new LatLng(1.373181,-77.3368996),
+                             new LatLng(1.3739479,-77.3372805),
+                             new LatLng(1.3737226,-77.3386592),
+                             new LatLng(1.3724785,-77.3390025),
+                             new LatLng(1.3721299,-77.3380637))
                         .strokeColor(Color.MAGENTA)
                         .strokeWidth(3);
 
@@ -1236,13 +1234,14 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'c';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,17));
                 break;
+
             case "Sector MD":
                 pOpMSD = new PolygonOptions()
                         .add(new LatLng(1.3718778,-77.337538),
-                                new LatLng(1.3709876,-77.3379564),
-                                new LatLng(1.3705425,-77.3370552),
-                                new LatLng(1.3710198,-77.3365831),
-                                new LatLng(1.3714649,-77.3366314))
+                             new LatLng(1.3709876,-77.3379564),
+                             new LatLng(1.3705425,-77.3370552),
+                             new LatLng(1.3710198,-77.3365831),
+                             new LatLng(1.3714649,-77.3366314))
                         .strokeColor(Color.RED)
                         .strokeWidth(3);
 
@@ -1251,13 +1250,14 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'd';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,18));
                 break;
+
             case "Sector ME":
                 pOpMSE = new PolygonOptions()
                         .add(new LatLng(1.3718778,-77.337538),
-                                new LatLng(1.3721299,-77.3380637),
-                                new LatLng(1.3723819,-77.3387825),
-                                new LatLng(1.3713952,-77.3389971),
-                                new LatLng(1.3709876,-77.3379564))
+                             new LatLng(1.3721299,-77.3380637),
+                             new LatLng(1.3723819,-77.3387825),
+                             new LatLng(1.3713952,-77.3389971),
+                             new LatLng(1.3709876,-77.3379564))
                         .strokeColor(Color.WHITE)
                         .strokeWidth(3);
 
@@ -1266,15 +1266,16 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'e';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,18));
                 break;
+
             case "Sector MF":
                 pOpMSF = new PolygonOptions()
                         .add(new LatLng(1.3707462,-77.3374736),
-                                new LatLng(1.3709876,-77.3379564),
-                                new LatLng(1.3712423,-77.3385975),
-                                new LatLng(1.3708428,-77.3386109),
-                                new LatLng(1.370269,-77.3382273),
-                                new LatLng(1.3702663,-77.3380369),
-                                new LatLng(1.3700464,-77.3374978))
+                             new LatLng(1.3709876,-77.3379564),
+                             new LatLng(1.3712423,-77.3385975),
+                             new LatLng(1.3708428,-77.3386109),
+                             new LatLng(1.370269,-77.3382273),
+                             new LatLng(1.3702663,-77.3380369),
+                             new LatLng(1.3700464,-77.3374978))
                         .strokeColor(Color.YELLOW)
                         .strokeWidth(3);
 
@@ -1283,13 +1284,14 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'f';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,18));
                 break;
+
             case "Sector MG":
                 pOpMSG = new PolygonOptions()
                         .add(new LatLng(1.3707462,-77.3374736),
-                                new LatLng(1.3700464,-77.3374978),
-                                new LatLng(1.3695771,-77.3374093),
-                                new LatLng(1.3695181,-77.3366958),
-                                new LatLng(1.370344,-77.3367012))
+                             new LatLng(1.3700464,-77.3374978),
+                             new LatLng(1.3695771,-77.3374093),
+                             new LatLng(1.3695181,-77.3366958),
+                             new LatLng(1.370344,-77.3367012))
                         .strokeColor(Color.LTGRAY)
                         .strokeWidth(3);
 
@@ -1298,17 +1300,18 @@ public class MapsActivity extends AppCompatActivity
                 sector = 'g';
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(camara,18));
                 break;
+
             case "Sector MH":
                 pOpMSH = new PolygonOptions()
                         .add(new LatLng(1.370344,-77.3367012),
-                                new LatLng(1.3694967,-77.3366636),
-                                new LatLng(1.3695637,-77.337428),
-                                new LatLng(1.3694297,-77.3377955),
-                                new LatLng(1.36877,-77.3378143),
-                                new LatLng(1.3689711,-77.3364061),
-                                new LatLng(1.3693841,-77.3359931),
-                                new LatLng(1.3701081,-77.3355049),
-                                new LatLng(1.3706068,-77.3363686))
+                             new LatLng(1.3694967,-77.3366636),
+                             new LatLng(1.3695637,-77.337428),
+                             new LatLng(1.3694297,-77.3377955),
+                             new LatLng(1.36877,-77.3378143),
+                             new LatLng(1.3689711,-77.3364061),
+                             new LatLng(1.3693841,-77.3359931),
+                             new LatLng(1.3701081,-77.3355049),
+                             new LatLng(1.3706068,-77.3363686))
                         .strokeColor(Color.GREEN)
                         .strokeWidth(3);
 
@@ -1355,63 +1358,65 @@ public class MapsActivity extends AppCompatActivity
                 dst.close();
             }
         } catch (Exception e) {
-            Log.i("Backup", e.toString());
+            Log.e("Exportacion_BackupDB",String.valueOf(e));
+            Toast toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
+            toast.show();
         }
     }
 
     public void generarArchivoT(){
 
-        int i=1;
+        listaDatos.clear();
         double x,y;
         bdP.abrirBD();
-        Cursor cursor = bdP.cargarDatos();
+        Cursor cursor = bdP.cargarDatosFinales();
         archivoCad = new String[cursor.getCount()+2];//5
-        archivoCad[0] = "X;" +
-                "Y;" +
-                "ID_CASA;" +
-                "LUGAR;" +
-                "T CAIDA DE CENIZA;" +
-                "ESTADO GENERAL;" +
-                "TIPO TECHO;" +
-                "MATERIAL COBERTURA;" +
-                "MATERIAL APOYO;" +
-                "FORMA CUBIERTA;" +
-                "INCLINACION CUBIERTA;" +
-                "Ancho FG;" +
-                "Alto FG;" +
-                "Area FG;" +
-                "Area Total Fachada;" +
-                "Ancho VG;" +
-                "Alto VG;" +
-                "Area VG;" +
-                "NPiso VG;" +
-                "Ancho VP;" +
-                "Alto VP;" +
-                "Area VP;" +
-                "NPiso VP;" +
-                "Area Total Ventanas;" +
-                "Ancho PG;" +
-                "Alto PG;" +
-                "Area PG;" +
-                "Area Total Puertas;" +
-                "Material Ventana;" +
-                "Marco Ventana;" +
-                "Material Piso;" +
-                "Material Muros;" +
-                "Tipologia Onda;" +
-                "Tipologia Ent;" +
-                "Observaciones OCH;" +
-                "Tipologia Lahares;" +
-                "Reforzado;Material Muros;" +
-                "Estado Edificacion;" +
-                "Observaciones L";
+        listaDatos.add( "X;"+
+                        "Y;" +
+                        "ID_CASA;" +
+                        "LUGAR;" +
+                        "T CAIDA DE CENIZA;" +
+                        "ESTADO GENERAL;" +
+                        "TIPO TECHO;" +
+                        "MATERIAL COBERTURA;" +
+                        "MATERIAL APOYO;" +
+                        "FORMA CUBIERTA;" +
+                        "INCLINACION CUBIERTA;" +
+                        "Ancho FG;" +
+                        "Alto FG;" +
+                        "Area FG;" +
+                        "Area Total Fachada;" +
+                        "Ancho VG;" +
+                        "Alto VG;" +
+                        "Area VG;" +
+                        "NPiso VG;" +
+                        "Ancho VP;" +
+                        "Alto VP;" +
+                        "Area VP;" +
+                        "NPiso VP;" +
+                        "Area Total Ventanas;" +
+                        "Ancho PG;" +
+                        "Alto PG;" +
+                        "Area PG;" +
+                        "Area Total Puertas;" +
+                        "Material Ventana;" +
+                        "Marco Ventana;" +
+                        "Material Piso;" +
+                        "Material Muros;" +
+                        "Tipologia Onda;" +
+                        "Tipologia Ent;" +
+                        "Observaciones OCH;" +
+                        "Tipologia Lahares;" +
+                        "Reforzado;Material Muros;" +
+                        "Estado Edificacion;" +
+                        "Observaciones L"
+        );
 
         if (cursor.moveToFirst()){
             do {
                 y = degUtmLat(cursor.getDouble(1),cursor.getDouble(2),1);
                 x = degUtmLat(cursor.getDouble(1),cursor.getDouble(2),2);
-                archivoCad[i] =
-                        Double.toString(x)+";"
+                listaDatos.add(  Double.toString(x)+";"
                                 +Double.toString(y)+";"
                                 +cursor.getString(0)+";"
                                 +cursor.getString(3)+";"
@@ -1450,83 +1455,67 @@ public class MapsActivity extends AppCompatActivity
                                 +cursor.getString(36)+";"
                                 +cursor.getString(37)+";"
                                 +cursor.getString(38)+";"
-                                +cursor.getString(39);
-                i++;
-
+                                +cursor.getString(39));
             }while (cursor.moveToNext());
-            guardarArchivo(archivoCad,"Tipologias");
+            guardarArchivo(listaDatos,"Tipologias");
         }
         bdP.cerrarBD();
     }
 
     public void generarArchivoF(){
 
-        int i=1;
-        double x,y;
+        listaDatos.clear();
         bdP.abrirBD();
         Cursor cursor = bdP.cargarDatos("tblfachada");
-        archivoCad = new String[cursor.getCount()+2];
-        archivoCad[0] = "ID_CASA;ANCHO;ALTURA;AREA;AREA1";
+        listaDatos.add("ID_CASA;ANCHO;ALTURA;AREA;AREA1");
 
         if (cursor.moveToFirst()){
             do {
-                archivoCad[i] = cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getString(3)+";"+cursor.getString(4);
-                i++;
-
+                listaDatos.add(cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getString(3)+";"+cursor.getString(4));
             }while (cursor.moveToNext());
-            guardarArchivo(archivoCad,"Fachada");
+            guardarArchivo(listaDatos,"Fachada");
         }
         bdP.cerrarBD();
     }
 
     public void generarArchivoV(){
 
-        int i=1;
-        double x,y;
+        listaDatos.clear();
         bdP.abrirBD();
         Cursor cursor = bdP.cargarDatos("tblventana");
-        archivoCad = new String[cursor.getCount()+2];
-        archivoCad[0] = "ID_CASA;ANCHO;ALTURA;AREA;NUMEROPISO";
+        listaDatos.add("ID_CASA;ANCHO;ALTURA;AREA;NUMEROPISO");
 
         if (cursor.moveToFirst()){
             do {
-                archivoCad[i] = cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getString(3)+";"+cursor.getString(4);
-                i++;
-
+                listaDatos.add(cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getString(3)+";"+cursor.getString(4));
             }while (cursor.moveToNext());
-            guardarArchivo(archivoCad,"Ventana");
+            guardarArchivo(listaDatos,"Ventana");
         }
         bdP.cerrarBD();
     }
 
     public void generarArchivoP(){
 
-        int i=1;
-        double x,y;
+        listaDatos.clear();
         bdP.abrirBD();
         Cursor cursor = bdP.cargarDatos("tblpuerta");
-        archivoCad = new String[cursor.getCount()+2];
-        archivoCad[0] = "ID_CASA;ANCHO;ALTURA;AREA";
+        listaDatos.add("ID_CASA;ANCHO;ALTURA;AREA");
 
         if(cursor.moveToFirst()){
             do {
-                archivoCad[i] = cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getString(3);
-                i++;
-
+                listaDatos.add(cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getString(3));
             }while (cursor.moveToNext());
-            guardarArchivo(archivoCad,"Puerta");
+            guardarArchivo(listaDatos,"Puerta");
         }
         bdP.cerrarBD();
     }
 
     public void generarArchivoL(){
 
-        int i=1;
-        double x,y;
+        listaDatos.clear();
         bdP.abrirBD();
         Cursor cursor = bdP.cargarDatos("tbllahares");
-        archivoCad = new String[cursor.getCount()+2];
-        archivoCad[0] = "ID_CASA;REFORZADO;MATERIAL MUROS;ESTADO EDIFICACION;TIPOLOGIA LAHARES;OBSERVACIONES";
+        listaDatos.add("ID_CASA;REFORZADO;MATERIAL MUROS;ESTADO EDIFICACION;TIPOLOGIA LAHARES;OBSERVACIONES");
 
         if (cursor.moveToFirst()){
             do {
@@ -1537,106 +1526,97 @@ public class MapsActivity extends AppCompatActivity
                 else {
                     reforzado = false;
                 }
-                archivoCad[i] = cursor.getString(0)+";"+reforzado+";"+cursor.getString(2)+";"+cursor.getString(3)+";"+cursor.getString(4)+";"+cursor.getString(5);
-                i++;
-
+                listaDatos.add(cursor.getString(0)+";"+reforzado+";"+cursor.getString(2)+";"+cursor.getString(3)+";"+cursor.getString(4)+";"+cursor.getString(5));
             }while (cursor.moveToNext());
-            guardarArchivo(archivoCad,"Lahares");
+            guardarArchivo(listaDatos,"Lahares");
         }
         bdP.cerrarBD();
     }
 
     public void generarArchivoOCH(){
 
-        int i=1;
-        double x,y;
+        listaDatos.clear();
         bdP.abrirBD();
         Cursor cursor = bdP.cargarDatos("tblondachoque");
-        archivoCad = new String[cursor.getCount()+2];
-        archivoCad[0] = "ID_CASA;MATERIAL VENTANA;MARCO VENTANA;MATERIAL PISO;MATERIAL MUROS;TIPOLOGIA ONDA DE CHOQUE;TIPOLOGIA ENTERRAMIENTO;OBSERVACIONES";
+        listaDatos.add("ID_CASA;MATERIAL VENTANA;MARCO VENTANA;MATERIAL PISO;MATERIAL MUROS;TIPOLOGIA ONDA DE CHOQUE;TIPOLOGIA ENTERRAMIENTO;OBSERVACIONES");
 
         if (cursor.moveToFirst()){
             do {
-                archivoCad[i] = cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getString(3)+";"+cursor.getString(4)+";"+cursor.getString(5)+";"+cursor.getString(6)+";"+cursor.getString(7);
-                i++;
-
+                listaDatos.add(cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getString(3)+";"+cursor.getString(4)+";"+cursor.getString(5)+";"+cursor.getString(6)+";"+cursor.getString(7));
             }while (cursor.moveToNext());
-            guardarArchivo(archivoCad,"OndaChoqueEnterramiento");
+            guardarArchivo(listaDatos,"OndaChoqueEnterramiento");
         }
         bdP.cerrarBD();
     }
 
     public void generarArchivoC(){
 
-        int i=1;
-        double x,y;
+        listaDatos.clear();
         bdP.abrirBD();
         Cursor cursor = bdP.cargarDatos("tblceniza");
-        archivoCad = new String[cursor.getCount()+2];
-        archivoCad[0] = "ID_CASA;TIPO TECHO;MATERIAL COBERTURA;MATERIAL APOYO;FORMA CUBIERTA;INCLINACION CUBIERTA;ESTADO GENERAL;TIPOLOGIA CENIZA;OBSERVACIONES";
+        listaDatos.add("ID_CASA;TIPO TECHO;MATERIAL COBERTURA;MATERIAL APOYO;FORMA CUBIERTA;INCLINACION CUBIERTA;ESTADO GENERAL;TIPOLOGIA CENIZA;OBSERVACIONES");
 
         if (cursor.moveToFirst()){
             do {
-                archivoCad[i] = cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getString(3)+";"+cursor.getString(4)+";"+cursor.getString(5)+";"+cursor.getString(6)+";"+cursor.getString(7)+";"+cursor.getString(8);
-                i++;
+                listaDatos.add(cursor.getString(0)+";"+cursor.getString(1)+";"+cursor.getString(2)+";"+cursor.getString(3)+";"+cursor.getString(4)+";"+cursor.getString(5)+";"+cursor.getString(6)+";"+cursor.getString(7)+";"+cursor.getString(8));
             }while (cursor.moveToNext());
-            guardarArchivo(archivoCad,"CaidadeCeniza");
+            guardarArchivo(listaDatos,"CaidadeCeniza");
         }
         bdP.cerrarBD();
     }
 
     public double degUtmLat(double deglat,double deglon, int tipo){
-        System.out.println("Longitud_Decimales= "+deglon);
-        System.out.println("Latitud_Decimales= "+deglat);
+        //System.out.println("Longitud_Decimales= "+deglon);
+        //System.out.println("Latitud_Decimales= "+deglat);
         double radlat=Math.toRadians(deglat);
         double radlon=Math.toRadians(deglon);
-        System.out.println("Longitud_Radianes= "+radlon);
-        System.out.println("Latitud_Radianes= "+radlat);
+        //System.out.println("Longitud_Radianes= "+radlon);
+        //System.out.println("Latitud_Radianes= "+radlat);
         double cos_2_radlat=0.5+((Math.cos(2*radlat))/2);
-        System.out.println("Cos2radlat= "+cos_2_radlat);
+        //System.out.println("Cos2radlat= "+cos_2_radlat);
         double ex=0.08199189;
         double ex_sec=0.08226889;
         double ex_2=ex_sec*ex_sec;
-        System.out.println("E2= "+ex_2);
+        //System.out.println("E2= "+ex_2);
         double c=6399936.608;
         double alpha=0.003367003;
         int hus= (int) ((deglon/6)+31);
-        System.out.println("Huso= "+hus);
+        //System.out.println("Huso= "+hus);
         double lambda_0=(hus*6)-183;
-        System.out.println("Lambda_0= "+lambda_0);
+        //System.out.println("Lambda_0= "+lambda_0);
         double delta_lambda=radlon-(Math.toRadians(lambda_0));
-        System.out.println("Delta Lambda= "+delta_lambda);
+        //System.out.println("Delta Lambda= "+delta_lambda);
         double A=Math.cos(radlat)*Math.sin(delta_lambda);
-        System.out.println("A= "+A);
+        //System.out.println("A= "+A);
         double xi=0.5*(Math.log((1+A)/(1-A)));
-        System.out.println("Xi= "+xi);
+        //System.out.println("Xi= "+xi);
         double eta=Math.atan((Math.tan(radlat)/Math.cos(delta_lambda)))-radlat;
-        System.out.println("eta= "+eta);
+        //System.out.println("eta= "+eta);
         double ni=(c/(Math.sqrt(1+(ex_2*cos_2_radlat))))*0.9996;
-        System.out.println("ni= "+ni);
+        //System.out.println("ni= "+ni);
         double zeta=ex_2/2*Math.pow(xi,2)*cos_2_radlat;
-        System.out.println("zeta= "+zeta);
+        //System.out.println("zeta= "+zeta);
         double A_1=Math.sin(2*radlat);
-        System.out.println("A_1= "+A_1);
+        //System.out.println("A_1= "+A_1);
         double A_2=A_1*cos_2_radlat;
-        System.out.println("A_2= "+A_2);
+        //System.out.println("A_2= "+A_2);
         double J_2=radlat+(A_1/2);
-        System.out.println("J_2= "+J_2);
+        //System.out.println("J_2= "+J_2);
         double J_4=((3*J_2)+A_2)/4;
-        System.out.println("J_4= "+J_4);
+        //System.out.println("J_4= "+J_4);
         double J_6=((5*J_4)+(A_2*cos_2_radlat))/3;
-        System.out.println("J_6= "+J_6);
+        //System.out.println("J_6= "+J_6);
         double alpha_1=ex_2*3/4;
-        System.out.println("alpha= "+alpha_1);
+        //System.out.println("alpha= "+alpha_1);
         double beta= (5*Math.pow(alpha_1,2))/3;
-        System.out.println("beta= "+beta);
+        //System.out.println("beta= "+beta);
         double gamma= (35*Math.pow(alpha_1,3))/27;
-        System.out.println("gamma= "+gamma);
+        //System.out.println("gamma= "+gamma);
         double B_0=0.9996*c*(radlat-(alpha_1*J_2)+(beta*J_4)-(gamma*J_6));
-        System.out.println("B_0= "+B_0);
+        //System.out.println("B_0= "+B_0);
         double utmlon=(xi*ni*(1+(zeta/3)))+500000;
         double utmlat=(eta*ni*(1+zeta))+B_0;
-        System.out.println("Lat= "+utmlat+" Lon= "+utmlon);
+        //System.out.println("Lat= "+utmlat+" Lon= "+utmlon);
         if(tipo==1){
             return utmlat;
         }
@@ -1645,25 +1625,28 @@ public class MapsActivity extends AppCompatActivity
         }
     }
 
-    public void guardarArchivo(String[] cad, String tabla){
-        File sd = Environment.getExternalStorageDirectory();
-
+    public void guardarArchivo(List<String> cad, String tabla){
         try {
+            File sd = Environment.getExternalStorageDirectory();
+
             File folder = new File(sd.getAbsolutePath()+"/Grama");
             folder.mkdir();
             FileWriter archivo = new FileWriter(folder.getAbsolutePath()+"/tbl"+tabla+" "+spSector.getSelectedItem().toString()+".txt");
 
             BufferedWriter bufferedWriter = new BufferedWriter(archivo);
 
-            for (int i=0; i<cad.length;i++){
-                bufferedWriter.write(cad[i]);
-                bufferedWriter.newLine();
-                bufferedWriter.flush();
+            if (cad != null){
+                for (int i=0; i<cad.size();i++){
+                    bufferedWriter.write(cad.get(i));
+                    bufferedWriter.newLine();
+                    bufferedWriter.flush();
+                }
             }
             archivo.close();
         }
         catch (Exception e){
-            Log.i("Escritura",e.toString());
+            Toast toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
+            toast.show();
         }
     }
 
@@ -1685,25 +1668,24 @@ public class MapsActivity extends AppCompatActivity
                     //Observaciones 7
                     if ((cursor.getString(3).equals("Madera") && (cursor.getString(4).equals("Bueno") || cursor.getString(4).equals("Regular") || cursor.getString(4).equals("Malo"))) ||
                             (cursor.getString(3).equals("Tapia Pisada") && cursor.getString(4).equals("Malo"))){
-                        bdP.updateLahares(idCasa,"Tipologia_1","tbllahares");
+                        bdP.updateLahares_ID(idCasa,"Tipologia_1","tbllahares");
                     }else {
                         if (((cursor.getString(3).equals("Ladrillo Macizo") || cursor.getString(3).equals("Bloque")) && cursor.getInt(2) == 0
                                 && (cursor.getString(4).equals("Bueno") || cursor.getString(4).equals("Regular"))) ||
                                 (cursor.getInt(2) == 1 && cursor.getString(4).equals("Malo"))){
-                            bdP.updateLahares(idCasa,"Tipologia_2","tbllahares");
+                            bdP.updateLahares_ID(idCasa,"Tipologia_2","tbllahares");
                         }else {
                             if ((cursor.getString(3).equals("Ladrillo Macizo") || cursor.getString(3).equals("Bloque")) && cursor.getInt(2) == 0
                             && (cursor.getString(4).equals("Bueno") || cursor.getString(4).equals("Regular"))){
-                                bdP.updateLahares(idCasa,"Tipologia_3","tbllahares");
+                                bdP.updateLahares_ID(idCasa,"Tipologia_3","tbllahares");
                             }else {
-                                bdP.updateLahares(idCasa," ","tbllahares");
+                                bdP.updateLahares_ID(idCasa," ","tbllahares");
                             }
                         }
                     }
                 }while (cursor.moveToNext());
             }
         }catch (Exception e){
-            Log.i("Error Lahares",e.toString());
             Toast toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
             toast.show();
         }
@@ -1733,22 +1715,21 @@ public class MapsActivity extends AppCompatActivity
                     if (((cursor.getString(3).equals("Teja Eternit") || cursor.getString(3).equals("Teja Zinc") || cursor.getString(3).equals("Policarbonato") || cursor.getString(3).equals("Teja Traslucida")) &&
                             (cursor.getString(7).equals("Bueno") || cursor.getString(7).equals("Regular") || cursor.getString(7).equals("Malo"))) ||
                             (cursor.getString(3).equals("Teja Barro") && cursor.getString(7).equals("Malo"))){
-                        bdP.updateCeniza(idCasa,"Tipologia_1","tblceniza");
+                        bdP.updateCeniza_ID(idCasa,"Tipologia_1","tblceniza");
                     }else {
                         if (cursor.getString(3).equals("Teja Barro") && (cursor.getString(7).equals("Bueno") || cursor.getString(7).equals("Regular"))){
-                            bdP.updateCeniza(idCasa,"Tipologia_2","tblceniza");
+                            bdP.updateCeniza_ID(idCasa,"Tipologia_2","tblceniza");
                         }else {
                             if (cursor.getString(2).equals("Losas")){
-                                bdP.updateCeniza(idCasa,"Tipologia_3","tblceniza");
+                                bdP.updateCeniza_ID(idCasa,"Tipologia_3","tblceniza");
                             }else {
-                                bdP.updateCeniza(idCasa," ","tblceniza");
+                                bdP.updateCeniza_ID(idCasa," ","tblceniza");
                             }
                         }
                     }
                 }while (cursor.moveToNext());
             }
         }catch (Exception e){
-            Log.i("Error Ceniza",e.toString());
             Toast toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
             toast.show();
         }
@@ -1779,11 +1760,13 @@ public class MapsActivity extends AppCompatActivity
                 startActivity(i);
                 overridePendingTransition(R.anim.left_in,R.anim.left_out);
                 break;
+
             case R.id.action_tutorial:
                 i = new Intent(MapsActivity.this, TutorialActivity.class);
                 startActivity(i);
                 overridePendingTransition(R.anim.left_in,R.anim.left_out);
                 break;
+
             case R.id.action_exit:
                 finish();
                 break;
@@ -1800,10 +1783,12 @@ public class MapsActivity extends AppCompatActivity
                 Intent i = new Intent(MapsActivity.this, RegistrarUsuarios.class);
                 startActivity(i);;
                 break;
+
             case R.id.nav_showUser:
                 Intent i2 = new Intent(MapsActivity.this, MostrarUsuario.class);
                 startActivity(i2);
                 break;
+
             case R.id.nav_loginUser:
                 LayoutInflater layoutInflater = getLayoutInflater();
                 View dialogLayout = layoutInflater.inflate(R.layout.form_login,null);
@@ -1872,6 +1857,7 @@ public class MapsActivity extends AppCompatActivity
 
                 d.show();
                 break;
+
             case R.id.nav_closeLogin:
                 navigationView.getMenu().findItem(R.id.nav_loginUser).setVisible(true);
                 navigationView.getMenu().findItem(R.id.nav_registerUser).setVisible(false);
@@ -1885,9 +1871,11 @@ public class MapsActivity extends AppCompatActivity
                 spCorregimiento.setVisibility(View.INVISIBLE);
                 btnActualizar.setVisibility(View.INVISIBLE);
                 break;
+
             case R.id.nav_camera:
                 fijarZona();
                 break;
+
             case R.id.nav_backup:
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE}, PackageManager.PERMISSION_GRANTED);
@@ -1895,14 +1883,15 @@ public class MapsActivity extends AppCompatActivity
                     backup();
                 }
                 break;
+
             case R.id.nav_extraRecords:
-                generarInfExtra();
+                generarInformacionExtra();
                 break;
+
             case R.id.nav_updateRecords:
                 updateCeniza();
                 break;
         }
-
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
@@ -1917,9 +1906,12 @@ public class MapsActivity extends AppCompatActivity
         //Crear directorio público en la carpeta Pictures.
         File directorio = new File(Environment.getExternalStorageDirectory(), nombreDirectorio);
         //Muestro un mensaje en el logcat si no se creo la carpeta por algun motivo
-        if (!directorio.mkdirs())
-            Log.e("backup", "Error: No se creo el directorio público");
-
+        if (!directorio.exists()){
+            if (!directorio.mkdirs()) {
+                Toast toast = Toast.makeText(context, "Error: No se creo el directorio público", Toast.LENGTH_LONG);
+                toast.show();
+            }
+        }
         return directorio;
     }
 
@@ -1944,7 +1936,39 @@ public class MapsActivity extends AppCompatActivity
         generarArchivoC();
         backupDatabase();
 
-        Toast t = Toast.makeText(this,"Exportacion de Archivos completada",Toast.LENGTH_SHORT);
+        Toast t = Toast.makeText(this,"Exportacion de Archivos completa en la carpeta Grama- Revisa en la memoria interna de tu dispositivo",Toast.LENGTH_LONG);
         t.show();
+    }
+
+    public void descomponerPK(String cad){
+
+        pos = cad.indexOf("_");
+        id1 = "";
+
+        for (int i=0;i<pos;i++){
+            id1 = id1 +cad.charAt(i);
+        }
+
+        for (int i=pos+1;i<cad.length();i++){
+            id2 = id2+cad.charAt(i);
+        }
+
+        numeral = Integer.valueOf(id2);
+    }
+
+    String concatenarPK(int num){
+        num+=1;
+        pk = id1 +"_"+num;
+        return pk;
+    }
+
+    public boolean hayCasas(){
+        bdP.abrirBD();
+        if (bdP.cargarDatos("tblcasa").getCount() > 0){
+            bdP.close();
+            return true;
+        }
+        bdP.close();
+        return false;
     }
 }

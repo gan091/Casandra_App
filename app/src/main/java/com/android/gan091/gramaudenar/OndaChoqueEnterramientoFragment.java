@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,29 +32,51 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
 
     private OnFragmentInteractionListener mListener;
 
-    String tipOCHAnterior;
-    boolean inicio = true;
-    float areaAcumuladaFachada, areaAcumuladaVentanas,porcentajeAberturas=-1,puntajeAb,puntajeCar,pAb,pCar,resultado;
-    int nPisos,idCasa;
-    long idRegistro = -1;
+    boolean start = true;
+    float cumulative_facade_area,
+          cumulative_window_area,
+          gap_percentage =-1,
+          gap_score,
+          feature_score,
+          pAb,
+          pCar,
+          result;
+    int number_floor;
+    long id_record = -1;
     AlertDialog d = null;
 
-    ArrayAdapter<String> aaMVentana,aaMatVentana,aaMatPisos,aaTO,aaTE;
+    ArrayAdapter<String> aa_windows_material,
+                         aa_windows_frame_material,
+                         aa_flooring_material,
+                         aa_shock_wave_typology,
+                         aa_burying_typology;
     BaseDeDatos bdP;
-    Button btnFac,btnVentana,btnPuerta,btnGenerar;
+    Button btn_facade,btn_window,btn_door,btn_generate;
     Context context;
-    EditText etPCE, etPAOCH, etPAE, etResultadoE,etObservaciones;
-    Spinner spMarVen,spMatVen,spMatPisos,spTipOCH,spTipE;
+    EditText et_percentage_according_height, et_gap_percentage, et_percentage_according_gaps, et_result, et_observations;
+    Spinner sp_windows_frame_material,
+            sp_windows_material,
+            sp_flooring_material,
+            sp_shock_wave_typology, 
+            sp_burying_typology;
 
-    String [] opcMatVentana = new String[] {" ","Vidrio","Madera"};
-    String [] opcMarVentana = new String[] {" ","Madera","Aluminio","Hierro Forjado"};
-    String [] opcMatPisos = new String[] {" ","Tierra","Madera","Concreto","Enchape"};
+    String [] options_windows_material = new String[] {" ","Vidrio","Madera"};
+    String [] options_windows_frame_material = new String[] {" ","Madera","Aluminio","Hierro Forjado"};
+    String [] options_flooring_material = new String[] {" ","Tierra","Madera","Concreto","Enchape"};
 
-    String [] opcTipOCh = new String[] {" ","Tipologia_1","Tipologia_2","Tipologia_3"};
-    String [] opcTipE = new String[] {" ","Tipologia_1","Tipologia_2"};
+    String [] options_shock_wave_typology = new String[] {" ","Tipologia_1","Tipologia_2","Tipologia_3"};
+    String [] options_burying_typology = new String[] {" ","Tipologia_1","Tipologia_2"};
 
-    String materialVen,marcoVentana,materialPisos,materialMuros,tipOndaChoque,tipEnterramiento,observaciones;
-    TextView tvA,tvA1,tvAlt;
+    String previous_shock_wave_typolgy,
+           id_house,
+           windows_material,
+           windows_frame_material,
+           flooring_material,
+           wall_material,
+           shock_wave_typology,
+           burying_typology,
+           observations;
+    TextView tv_gape_percentage, tv_percentage_according_gapes, tv_percentage_according_height;
 
     public OndaChoqueEnterramientoFragment() {
 
@@ -76,7 +99,7 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
         Intent i;
         Toast toast;
         Bundle b1 = new Bundle();
-        b1.putInt("idCasa",idCasa);
+        b1.putString("idCasa", id_house);
 
         switch (view.getId()){
             case R.id.btnGenerar:
@@ -100,15 +123,15 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
                 startActivity(i);
                 getActivity().overridePendingTransition(R.anim.left_in,R.anim.left_out);
                 break;
-            case R.id.tvPAb:
+            case R.id.tv_gap_percentage:
                 toast=Toast.makeText(getActivity(),"Porcentaje segun Caracteristicas",Toast.LENGTH_SHORT);
                 toast.show();
                 break;
-            case R.id.tvAb1:
+            case R.id.tv_perc_accor_gaps:
                 toast=Toast.makeText(getActivity(),"Porcentaje segun Aberturas (Puertas y Ventanas)",Toast.LENGTH_SHORT);
                 toast.show();
                 break;
-            case R.id.tvAlt:
+            case R.id.tv_perc_accor_height:
                 toast=Toast.makeText(getActivity(),"Porcentaje segun Altura (N° de Pisos)",Toast.LENGTH_SHORT);
                 toast.show();
                 break;
@@ -128,52 +151,52 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
 
         View v = inflater.inflate(R.layout.fragment_onda_choque_enterramiento, container, false);
 
-        spMarVen = v.findViewById(R.id.spVentana);
-        spMatVen = v.findViewById(R.id.spMatVentana);
-        spTipOCH = v.findViewById(R.id.spTipOn);
-        spTipE = v.findViewById(R.id.spTipEnt);
-        spMatPisos = v.findViewById(R.id.spMatPiso);
+        sp_windows_frame_material = v.findViewById(R.id.spVentana);
+        sp_windows_material = v.findViewById(R.id.spMatVentana);
+        sp_shock_wave_typology = v.findViewById(R.id.sp_shock_wave_typology);
+        sp_burying_typology = v.findViewById(R.id.sp_burying_typology);
+        sp_flooring_material = v.findViewById(R.id.spMatPiso);
 
-        btnFac = v.findViewById(R.id.btnFachViv);
-        btnVentana = v.findViewById(R.id.btnVen);
-        btnPuerta = v.findViewById(R.id.btnPuertas);
-        btnGenerar = v.findViewById(R.id.btnGenerar);
+        btn_facade = v.findViewById(R.id.btnFachViv);
+        btn_window = v.findViewById(R.id.btnVen);
+        btn_door = v.findViewById(R.id.btnPuertas);
+        btn_generate = v.findViewById(R.id.btnGenerar);
 
-        tvA = v.findViewById(R.id.tvPAb);
-        tvA1 = v.findViewById(R.id.tvAb1);
-        tvAlt = v.findViewById(R.id.tvAlt);
+        tv_gape_percentage = v.findViewById(R.id.tv_gap_percentage);
+        tv_percentage_according_gapes = v.findViewById(R.id.tv_perc_accor_gaps);
+        tv_percentage_according_height = v.findViewById(R.id.tv_perc_accor_height);
 
-        aaMVentana = new ArrayAdapter<>(context,android.R.layout.simple_spinner_item,opcMarVentana);
-        aaMatVentana = new ArrayAdapter<>(context,android.R.layout.simple_spinner_item,opcMatVentana);
-        aaTO = new ArrayAdapter<>(context,android.R.layout.simple_spinner_item,opcTipOCh);
-        aaTE = new ArrayAdapter<>(context,android.R.layout.simple_spinner_item,opcTipE);
-        aaMatPisos = new ArrayAdapter<>(context,android.R.layout.simple_spinner_item,opcMatPisos);
+        aa_windows_frame_material = new ArrayAdapter<>(context,android.R.layout.simple_spinner_item, options_windows_frame_material);
+        aa_windows_material = new ArrayAdapter<>(context,android.R.layout.simple_spinner_item, options_windows_material);
+        aa_shock_wave_typology = new ArrayAdapter<>(context,android.R.layout.simple_spinner_item, options_shock_wave_typology);
+        aa_burying_typology = new ArrayAdapter<>(context,android.R.layout.simple_spinner_item, options_burying_typology);
+        aa_flooring_material = new ArrayAdapter<>(context,android.R.layout.simple_spinner_item, options_flooring_material);
 
-        spMarVen.setAdapter(aaMVentana);
-        spMatVen.setAdapter(aaMatVentana);
-        spTipOCH.setAdapter(aaTO);
-        spTipE.setAdapter(aaTE);
-        spMatPisos.setAdapter(aaMatPisos);
+        sp_windows_frame_material.setAdapter(aa_windows_frame_material);
+        sp_windows_material.setAdapter(aa_windows_material);
+        sp_shock_wave_typology.setAdapter(aa_shock_wave_typology);
+        sp_burying_typology.setAdapter(aa_burying_typology);
+        sp_flooring_material.setAdapter(aa_flooring_material);
 
-        btnFac.setOnClickListener(this);
-        btnVentana.setOnClickListener(this);
-        btnPuerta.setOnClickListener(this);
-        btnGenerar.setOnClickListener(this);
+        btn_facade.setOnClickListener(this);
+        btn_window.setOnClickListener(this);
+        btn_door.setOnClickListener(this);
+        btn_generate.setOnClickListener(this);
 
-        tvA.setOnClickListener(this);
-        tvA1.setOnClickListener(this);
-        tvAlt.setOnClickListener(this);
+        tv_gape_percentage.setOnClickListener(this);
+        tv_percentage_according_gapes.setOnClickListener(this);
+        tv_percentage_according_height.setOnClickListener(this);
 
-        etPAOCH = v.findViewById(R.id.etPAb);
+        et_gap_percentage = v.findViewById(R.id.et_gap_percentage);
 
-        etPCE = v.findViewById(R.id.etPCE);
-        etPAE = v.findViewById(R.id.etPAE);
-        etResultadoE = v.findViewById(R.id.etRE);
-        etObservaciones = v.findViewById(R.id.etObservaciones);
+        et_percentage_according_height = v.findViewById(R.id.et_perc_accor_height);
+        et_percentage_according_gaps = v.findViewById(R.id.et_perc_accor_gaps);
+        et_result = v.findViewById(R.id.et_result);
+        et_observations = v.findViewById(R.id.etObservaciones);
 
         Bundle bundle = getActivity().getIntent().getExtras();
 
-        idCasa = bundle.getInt("idcasa");
+        id_house = bundle.getString("idcasa");
 
         cargarDatos();
 
@@ -209,7 +232,7 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
 
     public void cargarDatos(){
         bdP.abrirBD();
-        Cursor cursor = bdP.cargarDatosTablas(idCasa,"tblOndaChoque");
+        Cursor cursor = bdP.cargarDatos_ID_RID(id_house,"tblOndaChoque");
         /*
         0 -> RowId
         1 -> IdCasa
@@ -230,16 +253,14 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
             3 -> Material de Pisos
              */
             do {
+                id_record = cursor.getLong(0);
                 setSpinner(cursor.getString(2),1);
                 setSpinner(cursor.getString(3),2);
                 setSpinner(cursor.getString(4),3);
-                etObservaciones.setText(cursor.getString(8));
-                idRegistro = cursor.getLong(0);
+                setSpinner(cursor.getString(6),4);
+                setSpinner(cursor.getString(7),5);
+                et_observations.setText(cursor.getString(8));
             }while (cursor.moveToNext());
-            Log.i("Cas->IdCasaOCH",Integer.toString(idCasa));
-
-            tipificacionOndaChoque();//mirar si es mas practico cargar dato desde cursor
-            tipificacionEnterramiento();
         }
         bdP.cerrarBD();
     }
@@ -250,74 +271,80 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
         /*Se asigna a variables locales las selecciones de las listas de materiales tanto para
           ventanas, marco de ventanas, pisos y las observaciones que se hacen con respecto a la
           vivienda*/
-        marcoVentana = spMarVen.getSelectedItem().toString();
-        materialVen = spMatVen.getSelectedItem().toString();
-        materialPisos = spMatPisos.getSelectedItem().toString();
+        windows_frame_material = sp_windows_frame_material.getSelectedItem().toString();
+        windows_material = sp_windows_material.getSelectedItem().toString();
+        flooring_material = sp_flooring_material.getSelectedItem().toString();
 
-        observaciones = etObservaciones.getText().toString();
+        observations = et_observations.getText().toString();
 
-        if (bdP.existeRegistro(idRegistro,"tblondachoque")){
+        if (bdP.existeRegistro_RID(id_record,"tblondachoque")){
 
             AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
 
             builder1.setTitle("Registro Existente")
                     .setMessage("Ya hay registros almacenados previamente ¿Desea actualizar los registros?")
-                    .setPositiveButton("Si",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    tipificacionOndaChoque();
-                                    tipificacionEnterramiento();
+                    .setPositiveButton("Si", new DialogInterface.OnClickListener() {
 
-                                    try {
-                                        bdP.abrirBD();
-                                        bdP.updateOndadeChoque(idRegistro,materialVen,marcoVentana,materialPisos,tipOndaChoque,tipEnterramiento,observaciones.replaceAll("\n", ""));
-                                        bdP.cerrarBD();
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            tipificacionOndaChoque();
+                            tipificacionEnterramiento();
 
-                                        Toast toast;
-                                        toast=Toast.makeText(context,"Actualizacion de Registro Completada",Toast.LENGTH_SHORT);
-                                        toast.show();
-                                    }
-                                    catch (Exception e){
-                                        Toast toast;
-                                        toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
-                                        toast.show();
-                                    }
-                                }
-                            })
-                    .setNegativeButton("No",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    d.dismiss();
-                                }
-                            });
+                            try {
+                                bdP.abrirBD();
+                                bdP.updateOndadeChoque_RID(id_record, windows_material, windows_frame_material, flooring_material, shock_wave_typology, burying_typology, observations.replaceAll("\n", ""));
+                                bdP.cerrarBD();
+
+                                Toast toast;
+                                toast=Toast.makeText(context,"Actualizacion de Registro Completa",Toast.LENGTH_SHORT);
+                                toast.show();
+                            }
+                            catch (Exception e){
+                                Toast toast;
+                                toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
+                                toast.show();
+                            }
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            d.dismiss();
+                        }
+                    });
             d = builder1.create();
             d.show();
         }else {
-            tipificacionOndaChoque();
-            tipificacionEnterramiento();
-            try {
-                idRegistro = bdP.insertarOndaChoqueEnterramiento(
-                        idCasa,
-                        materialVen,
-                        marcoVentana,
-                        materialPisos,
-                        materialMuros,
-                        tipOndaChoque,
-                        tipEnterramiento,
-                        observaciones.replaceAll("\n", ""));
-
-                //Log.i("Tipologia",tipEnterramiento);
-                inicio = false;
-                Toast toast;
-                toast=Toast.makeText(context,"Tipologia Onda de Choque - Guardado Exitoso",Toast.LENGTH_SHORT);
-                toast.show();
-            }
-            catch (Exception e){
-                Toast toast;
-                toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
-                toast.show();
+            if (!bdP.existeRegistro_ID("tblfachada",id_house) &&
+                !bdP.existeRegistro_ID("tblventana",id_house) &&
+                !bdP.existeRegistro_ID("tblpuerta",id_house) &&
+                TextUtils.isEmpty(et_observations.getText().toString())
+            ){
+                et_observations.requestFocus();
+                et_observations.setError("Al menos ingresar las observaciones de porque no se ha registrado ningun dato");
+            }else {
+                tipificacionOndaChoque();
+                tipificacionEnterramiento();
+                try {
+                    id_record = bdP.insertarOndaChoqueEnterramiento_ID(id_house,
+                            windows_material,
+                            windows_frame_material,
+                            flooring_material,
+                            wall_material,
+                            shock_wave_typology,
+                            burying_typology,
+                            observations.replaceAll("\n", ""));
+                    start = false;
+                    Toast toast;
+                    toast=Toast.makeText(context,"Tipologia Onda de Choque - Guardado Exitoso",Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+                catch (Exception e){
+                    Toast toast;
+                    toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
+                    toast.show();
+                }
             }
         }
     }
@@ -329,40 +356,72 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
         switch (tipo){
             case 1:
                 switch (opc){
+                    case " ":
+                        sp_windows_material.setSelection(0);
+                        break;
                     case "Vidrio":
-                        spMatVen.setSelection(1);
+                        sp_windows_material.setSelection(1);
                         break;
                     case "Madera":
-                        spMatVen.setSelection(2);
+                        sp_windows_material.setSelection(2);
                         break;
                 }
                 break;
             case 2:
                 switch (opc){
+                    case " ":
+                        sp_windows_frame_material.setSelection(0);
+                        break;
                     case "Madera":
-                        spMarVen.setSelection(1);
+                        sp_windows_frame_material.setSelection(1);
                         break;
                     case "Aluminio":
-                        spMarVen.setSelection(2);
+                        sp_windows_frame_material.setSelection(2);
                         break;
                     case "Hierro Forjado":
-                        spMarVen.setSelection(3);
+                        sp_windows_frame_material.setSelection(3);
                         break;
                 }
                 break;
             case 3:
                 switch (opc){
+                    case " ":
+                        sp_flooring_material.setSelection(0);
+                        break;
                     case "Tierra":
-                        spMatPisos.setSelection(1);
+                        sp_flooring_material.setSelection(1);
                         break;
                     case "Madera":
-                        spMatPisos.setSelection(2);
+                        sp_flooring_material.setSelection(2);
                         break;
                     case "Concreto":
-                        spMatPisos.setSelection(3);
+                        sp_flooring_material.setSelection(3);
                         break;
                     case "Enchape":
-                        spMatPisos.setSelection(4);
+                        sp_flooring_material.setSelection(4);
+                        break;
+                }
+                break;
+            case 4:
+                switch (opc){
+                    case "Tipologia_1":
+                        sp_shock_wave_typology.setSelection(1);
+                        break;
+                    case "Tipologia_2":
+                        sp_shock_wave_typology.setSelection(2);
+                        break;
+                    case "Tipologia_3":
+                        sp_shock_wave_typology.setSelection(3);
+                        break;
+                }
+                break;
+            case 5:
+                switch (opc){
+                    case "Tipologia_1":
+                        sp_burying_typology.setSelection(1);
+                        break;
+                    case "Tipologia_2":
+                        sp_burying_typology.setSelection(2);
                         break;
                 }
                 break;
@@ -372,19 +431,19 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
     public void tipificacionEnterramiento() {
 
         float alturaFachada = 0,
-                areaAcumuladaFachada = 0, // Verificar si se puede utilizar con las variables locales
-                areaAcumuladaPuertas = 0,
-                areaAcumuladaVentanas = 0;
+              areaAcumuladaFachada = 0, // Verificar si se puede utilizar con las variables locales
+              areaAcumuladaPuertas = 0,
+              areaAcumuladaVentanas = 0;
 
         bdP.abrirBD();
-        Cursor cursorFachada = bdP.cargarDatosTablas(idCasa, "tblFachada");
+        Cursor cursor_fachada_te = bdP.cargarDatos_ID_RID(id_house, "tblFachada");
 
-        Cursor cursorPuertas = bdP.cargarDatosTablas(idCasa, "tblPuerta");
+        Cursor cursor_puertas_te = bdP.cargarDatos_ID_RID(id_house, "tblPuerta");
 
-        Cursor cursorVentanas = bdP.cargarDatosTablas1(idCasa);
+        Cursor cursor_ventanas_te = bdP.cargarDatosVentanaP1_RID(id_house);
 
         /*
-                    cursorFachada               cursorPuertas                   cursorVentanas
+                    cursor_fachada_te        cursor_puertas_te               cursor_ventanas_te
             0 -->       RowId                       RowId                           RowId
             1 -->       IdCasa                      IdCasa                          IdCasa
             2 -->       Ancho                       Ancho                           Ancho
@@ -393,53 +452,53 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
             5 -->       AreaPiso1                     -                             NumeroPiso
          */
 
-        if (cursorFachada.moveToFirst()) {
+        if (cursor_fachada_te.moveToFirst()) {
 
-            //Recorrer el cursorFachada, obtener el area acumulada solo del primer piso
+            //Recorrer el cursor_fachada_te, obtener el area acumulada solo del primer piso
             // y obtener la altura de la edificacion
             do {
-                areaAcumuladaFachada = areaAcumuladaFachada + cursorFachada.getFloat(5);
-                alturaFachada = cursorFachada.getFloat(3);
-            } while (cursorFachada.moveToNext());
+                areaAcumuladaFachada = areaAcumuladaFachada + cursor_fachada_te.getFloat(5);
+                alturaFachada = cursor_fachada_te.getFloat(3);
+            } while (cursor_fachada_te.moveToNext());
         }
         else{
             areaAcumuladaFachada = 1;
         }
 
-        if (cursorVentanas.moveToFirst()){
+        if (cursor_ventanas_te.moveToFirst()){
             //Recorrer el cursorVentanas y obtener el area acumulada solo del primer piso
             do {
-                areaAcumuladaVentanas = areaAcumuladaVentanas + cursorVentanas.getFloat(4);
-            } while (cursorVentanas.moveToNext());
+                areaAcumuladaVentanas = areaAcumuladaVentanas + cursor_ventanas_te.getFloat(4);
+            } while (cursor_ventanas_te.moveToNext());
         }
 
-        if (cursorPuertas.moveToFirst()){
+        if (cursor_puertas_te.moveToFirst()){
             //Recorrer el cursorPuertas y obtener el area acumulada, y como solo se tienen en
             // cuenta las puertas del primer piso se toma toda las areas registradas
             do {
-                areaAcumuladaPuertas = areaAcumuladaPuertas + cursorPuertas.getFloat(4);
-            } while (cursorPuertas.moveToNext());
+                areaAcumuladaPuertas = areaAcumuladaPuertas + cursor_puertas_te.getFloat(4);
+            } while (cursor_puertas_te.moveToNext());
         }
 
         //Se obtiene el numero de pisos de la edificacion al dividir la altura de la Fachada
         // entre la medida estandar asignada de un piso de una vivienda
-        nPisos = (int) (alturaFachada / 2.8) + 1;
+        number_floor = (int) (alturaFachada / 2.8) + 1;
 
         //Se obtiene el porcentaje de aberturas al dividir las areas acumuladas combinadas de
         // puertas y ventanas con el area acumulada de la fachada y se multiplica por 100
-        porcentajeAberturas = ((areaAcumuladaVentanas + areaAcumuladaPuertas) / areaAcumuladaFachada) * 100;
+        gap_percentage = ((areaAcumuladaVentanas + areaAcumuladaPuertas) / areaAcumuladaFachada) * 100;
 
         // Se le asigna una puntuacion de aberturas de acuerdo al porcentaje obtenido de las mismas
         // Si porcentaje de aberturas es menor a 10% se le asigna un valor de 1
         // Si porcentaje de aberturas esta entre 10% y 50% se le asigna un valor de 5
         // Si porcentaje de aberturas es mayor a 50% se le asigna un valor de 10
-        if (porcentajeAberturas < 10) {
-            puntajeAb = (float) 1;
-        } else if (porcentajeAberturas > 50) {
-            puntajeAb = (float) 10;
+        if (gap_percentage < 10) {
+            gap_score = (float) 1;
+        } else if (gap_percentage > 50) {
+            gap_score = (float) 10;
         } else {
-            if (porcentajeAberturas >= 10 && porcentajeAberturas <= 50) {
-                puntajeAb = (float) 5;
+            if (gap_percentage >= 10 && gap_percentage <= 50) {
+                gap_score = (float) 5;
             }
         }
 
@@ -447,34 +506,34 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
         // Se le asigna una puntuacion de caracteristicas de acuerdo al numero de pisos de la vivienda
         // Si numero de pisos es igual a 1 se le asigna un valor de 10
         // Si numero de pisos es mayor de 1 se le asigna un valor de 5
-        if(nPisos == 1){
-            puntajeCar = (float) 10;
+        if(number_floor == 1){
+            feature_score = (float) 10;
         }
         else{
-            if (nPisos > 1){
-                puntajeCar = (float) 5;
+            if (number_floor > 1){
+                feature_score = (float) 5;
             }
             else {
-                puntajeCar = (float) 0;
+                feature_score = (float) 0;
             }
         }
 
         // A cada puntuacion le corresponde un porcentaje de influencia en el resultado final
         // es asi que para el porcentaje de aberturas tiene un 70% y
         // para las caracteristicas fisicas se tiene un 30%
-        pAb = (float)(puntajeAb * 0.7);
-        pCar = (float)(puntajeCar * 0.3);
+        pAb = (float)(gap_score * 0.7);
+        pCar = (float)(feature_score * 0.3);
 
         // Al sumar los resultados obtenidos tanto de aberturas como de caracteristicas y despues de aplicar sus
         // respectivos porcentajes, se obtiene el resultado que definira el tipo de Tipologia Estructural frente
         // a la amenaza volcanica enterramiento que aplica para la vivienda
-        resultado = pAb + pCar;
+        result = pAb + pCar;
 
         // Se muestra en la interfaz los resultados obtenidos al realizar los calculos para determinar la tipologia
         // estructural frente a la amenaza volcanica de enterramiento
-        etPCE.setText(Float.toString(bdP.reducirFloat(pCar)));
-        etPAE.setText(Float.toString(bdP.reducirFloat(pAb)));
-        etResultadoE.setText(Float.toString(bdP.reducirFloat(resultado)));
+        et_percentage_according_height.setText(Float.toString(bdP.reducirFloat(pCar)));
+        et_percentage_according_gaps.setText(Float.toString(bdP.reducirFloat(pAb)));
+        et_result.setText(Float.toString(bdP.reducirFloat(result)));
 
         // Tipologias
         // 0 -> Sin Tipologia
@@ -482,33 +541,33 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
         // 2 -> Tipologia 2 => Si el resultado es menor de 5 o
         //                     si el resultado esta entre 5 y 10 pero el porcentaje de aberturas es 0
 
-        if(resultado < 5){
-            spTipE.setSelection(2);
+        if(result < 5){
+            sp_burying_typology.setSelection(2);
         }
         else {
-            if (resultado <= 10) {
-                if (puntajeAb == 0) {
-                    spTipE.setSelection(2);
+            if (result <= 10) {
+                if (gap_score == 0) {
+                    sp_burying_typology.setSelection(2);
                 } else {
-                    spTipE.setSelection(1);
+                    sp_burying_typology.setSelection(1);
                 }
             }
         }
 
         // Se muestra en la interfaz el resultado de la Tipologia Estructural generada en base a la amenaza
         // volcanica de Enterramiento
-        tipEnterramiento = spTipE.getSelectedItem().toString();
+        burying_typology = sp_burying_typology.getSelectedItem().toString();
         bdP.cerrarBD();
     }
 
     public void tipificacionOndaChoque(){
-        areaAcumuladaFachada = 0;
-        areaAcumuladaVentanas = 0;
+        cumulative_facade_area = 0;
+        cumulative_window_area = 0;
 
         bdP.abrirBD();
 
-        Cursor cursorFachada = bdP.cargarDatosTablas(idCasa,"tblFachada");
-        Cursor cursorVentanas = bdP.cargarDatosTablas(idCasa,"tblVentana");
+        Cursor cursorFachada = bdP.cargarDatos_ID_RID(id_house,"tblFachada");
+        Cursor cursorVentanas = bdP.cargarDatos_ID_RID(id_house,"tblVentana");
 
         /*
                     cursorFachada      cursorVentanas
@@ -524,25 +583,25 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
 
             //Recorrer el cursorFachada y obtener el area acumulada
             do {
-                areaAcumuladaFachada = areaAcumuladaFachada + cursorFachada.getFloat(4);
+                cumulative_facade_area = cumulative_facade_area + cursorFachada.getFloat(4);
             }while (cursorFachada.moveToNext());
-            Log.i("Area Acumulada Fachada",Float.toString(areaAcumuladaFachada));
+            Log.i("Area Acumulada Fachada",Float.toString(cumulative_facade_area));
 
             //Recorrer el cursorVentanas y obtener el area acumulada
             do {
-                areaAcumuladaVentanas = areaAcumuladaVentanas + cursorVentanas.getFloat(4);
+                cumulative_window_area = cumulative_window_area + cursorVentanas.getFloat(4);
             }while (cursorVentanas.moveToNext());
-            Log.i("Area Acumulada Ventanas",Float.toString(areaAcumuladaVentanas));
+            Log.i("Area Acumulada Ventanas",Float.toString(cumulative_window_area));
         }
 
         // Se obtiene el porcentaje de aberturas al dividir el area acumulada de
         //  ventanas con el area acumulada de la fachada y se multiplica por 100
-        porcentajeAberturas = (areaAcumuladaVentanas / areaAcumuladaFachada)*100;
-        Log.i("Porcentaje de Aberturas",Float.toString(porcentajeAberturas));
+        gap_percentage = (cumulative_window_area / cumulative_facade_area)*100;
+        Log.i("Porcentaje de Aberturas",Float.toString(gap_percentage));
 
         // Se realiza esta validacion que ocurre cuando se registran mal los datos ya sea de ventanas o fachada
-        if (porcentajeAberturas>100){
-            porcentajeAberturas=100;
+        if (gap_percentage >100){
+            gap_percentage =100;
 
             AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
 
@@ -562,34 +621,34 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
 
         // Se muestra en la interfaz el resultado del Porcentaje de Aberturas obtenido al realizar los calculos previos
         // para la generar la Tipologia Estructural generada en base a la amenaza volcanica de Onda de Choque
-        etPAOCH.setText(Float.toString(bdP.reducirFloat(porcentajeAberturas)));
+        et_gap_percentage.setText(Float.toString(bdP.reducirFloat(gap_percentage)));
 
         // Tipologias
         // 0 -> Sin Tipologia
         // 1 -> Tipologia 1 => Si el porcentaje de aberturas es mayor de 50
         // 2 -> Tipologia 2 => Si el porcentaje de aberturas esta entre 10 y 50
         // 3 -> Tipologia 3 => Si el porcentaje de aberturas esta entre 0 y 10
-        if(porcentajeAberturas < 10 && porcentajeAberturas >= 0){
-            spTipOCH.setSelection(3);
+        if(gap_percentage < 10 && gap_percentage >= 0){
+            sp_shock_wave_typology.setSelection(3);
         }
         else{
-            if (porcentajeAberturas > 50) {
-                spTipOCH.setSelection(1);
+            if (gap_percentage > 50) {
+                sp_shock_wave_typology.setSelection(1);
             }
             else{
-                if (porcentajeAberturas >= 10 && porcentajeAberturas <= 50) {
-                    spTipOCH.setSelection(2);
+                if (gap_percentage >= 10 && gap_percentage <= 50) {
+                    sp_shock_wave_typology.setSelection(2);
                 }
                 else {
-                    spTipOCH.setSelection(0);
+                    sp_shock_wave_typology.setSelection(0);
                 }
             }
         }
 
         // Se muestra en la interfaz el resultado de la Tipologia Estructural generada en base a la amenaza
         // volcanica de Onda de Choque
-        tipOndaChoque = spTipOCH.getSelectedItem().toString();
-        tipOCHAnterior = tipOndaChoque; //Intentar cambiar la tipologia generada de acuerdo a la evaluacion del revisor
+        shock_wave_typology = sp_shock_wave_typology.getSelectedItem().toString();
+        previous_shock_wave_typolgy = shock_wave_typology; //Intentar cambiar la tipologia generada de acuerdo a la evaluacion del revisor
         bdP.cerrarBD();
     }
 }

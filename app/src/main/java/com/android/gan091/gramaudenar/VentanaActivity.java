@@ -19,8 +19,6 @@ import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -38,7 +36,8 @@ public class VentanaActivity extends AppCompatActivity implements View.OnClickLi
 
     boolean existe = false;
     float areaLocal;
-    int idCasa, posicion;
+    int posicion;
+    String id_house;
     long idRegistro = 0;
 
     Fuente objetoEliminado;
@@ -66,7 +65,7 @@ public class VentanaActivity extends AppCompatActivity implements View.OnClickLi
         FloatingActionButton fabExit = findViewById(R.id.fabExitVentana);
         Bundle bundle = getIntent().getExtras();
 
-        idCasa = bundle.getInt("idCasa");
+        id_house = bundle.getString("idCasa");
         context = this;
         bdP = new BaseDeDatos(context);
 
@@ -106,7 +105,7 @@ public class VentanaActivity extends AppCompatActivity implements View.OnClickLi
     public void cargarDatos(){
 
         bdP.abrirBD();
-        final Cursor cursor = bdP.cargarDatosTablas(idCasa, "tblventana");
+        final Cursor cursor = bdP.cargarDatos_ID_RID(id_house, "tblventana");
 
         try {
             if (cursor.moveToFirst()){
@@ -238,13 +237,13 @@ public class VentanaActivity extends AppCompatActivity implements View.OnClickLi
 
                 idRegistro = lista.get(posicion).getIdRegistro();
                 bdP.abrirBD();
-                cursorEliminado = bdP.cargarDatos(idRegistro,"tblventana");
+                cursorEliminado = bdP.cargarDatos_RID(idRegistro,"tblventana");
                 cursorEliminado.moveToFirst();
                 bdP.cerrarBD();
 
                 if (direction == 8){
                     try {
-                        bdP.eliminarRegistroExacto("tblventana",idRegistro);
+                        bdP.eliminarRegistro_RID("tblventana",idRegistro);
                     }
                     catch (Exception e){
                         Toast toast;
@@ -258,9 +257,9 @@ public class VentanaActivity extends AppCompatActivity implements View.OnClickLi
                         @Override
                         public void onClick(View view) {
                             try {
-                                long registro = bdP.insertarVentana(
+                                long registro = bdP.insertarVentana_RID(
                                         cursorEliminado.getLong(0), //RowId
-                                        cursorEliminado.getInt(1),  //IdCasa
+                                        cursorEliminado.getString(1),  //IdCasa
                                         cursorEliminado.getFloat(2),//Ancho
                                         cursorEliminado.getFloat(3),//Alto
                                         cursorEliminado.getFloat(4),//Area
@@ -300,7 +299,7 @@ public class VentanaActivity extends AppCompatActivity implements View.OnClickLi
         areaLocal = ancho * alto;
 
         try {
-            rVentana = bdP.insertar(idCasa,ancho,alto,areaLocal,numeroPiso);
+            rVentana = bdP.insertarVentana_ID(id_house,ancho,alto,areaLocal,numeroPiso);
         }
         catch (Exception e){
             Toast toast;
@@ -426,7 +425,7 @@ public class VentanaActivity extends AppCompatActivity implements View.OnClickLi
 
                             bdP.abrirBD();
                             try {
-                                bdP.updateVentana(idR,anchoRegistro,altoRegistro,numPisoRegistro,areaLocal);
+                                bdP.updateVentana_RID(idR,anchoRegistro,altoRegistro,numPisoRegistro,areaLocal);
                             }
                             catch (Exception e){
                                 Toast toast;

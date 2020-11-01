@@ -7,7 +7,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,9 +34,9 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
     private OnFragmentInteractionListener mListener;
 
     boolean excepcion = false;
-    String tipCenizaAnterior,tipCenizaActual;
+    String id_house, tipCenizaAnterior,tipCenizaActual;
     float pMatTcho,pEstGenCub,pMatElemApoyo,pIncCub,resCeniza;
-    int idCasa, materialTecho, estadoGeneralCubierta, materialElementoApoyo, anguloInclinacionCubierta;
+    int materialTecho, estadoGeneralCubierta, materialElementoApoyo, anguloInclinacionCubierta;
     long idRegistro = -1;
     AlertDialog d = null;
 
@@ -170,7 +170,7 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
 
         Bundle bundle = getActivity().getIntent().getExtras();
 
-        idCasa = bundle.getInt("idcasa");
+        id_house = bundle.getString("idcasa");
 
         habilitarCubierta();
 
@@ -202,7 +202,7 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
     public void cargarDatos(){
 
         bdP.abrirBD();
-        Cursor cursorCeniza = bdP.cargarDatosTablas(idCasa,"tblceniza");
+        Cursor cursorCeniza = bdP.cargarDatos_ID_RID(id_house,"tblceniza");
 
         /*
         0 -> RowId
@@ -238,7 +238,8 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
             2 -> Material de Elemento de Apoyo
             3 -> Forma de Cubiertas
             4 -> Inclinacion de Cubierta
-            5 -> Estado General de la Cubierta*/
+            5 -> Estado General de la Cubierta
+            6 -> Tipologia de Caida de Ceniza*/
 
                 do {
                     setSpinner(cursorCeniza.getString(3),1);
@@ -246,11 +247,11 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
                     setSpinner(cursorCeniza.getString(5),3);
                     setSpinner(cursorCeniza.getString(6),4);
                     setSpinner(cursorCeniza.getString(7),5);
+                    setSpinner(cursorCeniza.getString(8),6);
                     etObservaciones.setText(cursorCeniza.getString(9));
                     //idRegistro = cursorCeniza.getLong(0);
                 }while (cursorCeniza.moveToNext());
             }
-            tipificacionCeniza();
         }
         bdP.cerrarBD();
     }
@@ -272,7 +273,7 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
 
     public void guardarBD(){
 
-        if (bdP.existeRegistro(idRegistro,"tblceniza")){
+        if (bdP.existeRegistro_RID(idRegistro,"tblceniza")){
             AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
 
             builder1.setTitle("Registro Existente")
@@ -287,7 +288,7 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
                                         if (swTecho.isChecked() == false){
                                             try {
                                                 bdP.abrirBD();
-                                                bdP.updateCaidadeCeniza(
+                                                bdP.updateCaidadeCeniza_RID(
                                                         idRegistro,
                                                         tipoTecho,
                                                         spMatCob.getSelectedItem().toString(),
@@ -312,7 +313,7 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
                                         else {
                                             try {
                                                 bdP.abrirBD();
-                                                bdP.updateCaidadeCeniza(
+                                                bdP.updateCaidadeCeniza_RID(
                                                         idRegistro,
                                                         tipoTecho,
                                                         "",
@@ -348,23 +349,58 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
             d.show();
         }
         else {
-            tipificacionCeniza();
-            if (!excepcion){
-                String matCob="",matEle="",forma="",inclinacion="",estado="",observaciones;
+            String matCob="",matEle="",forma="",inclinacion="",estado="",observaciones;
+            if (!swTecho.isChecked()){
+                if (spMatCob.getSelectedItem().toString().equals(" ") &&
+                    spMatCob.getSelectedItem().toString().equals(" ") &&
+                    spMatElemAp.getSelectedItem().toString().equals(" ") &&
+                    spMorfCub.getSelectedItem().toString().equals(" ") &&
+                    spIncCub.getSelectedItem().toString().equals(" ") &&
+                    spEstGenCub.getSelectedItem().toString().equals(" ") &&
+                    TextUtils.isEmpty(etObservaciones.getText().toString())
+                ){
+                    etObservaciones.requestFocus();
+                    etObservaciones.setError("Al menos ingresar las observaciones de porque no se ha registrado ningun dato");
+                }else {
+                    tipificacionCeniza();
+                    if (!excepcion){
+                        matCob = spMatCob.getSelectedItem().toString();
+                        matEle = spMatElemAp.getSelectedItem().toString();
+                        forma = spMorfCub.getSelectedItem().toString();
+                        inclinacion = spIncCub.getSelectedItem().toString();
+                        estado = spEstGenCub.getSelectedItem().toString();
+                        observaciones = etObservaciones.getText().toString();
 
-                if (!swTecho.isChecked()){
-                    matCob = spMatCob.getSelectedItem().toString();
-                    matEle = spMatElemAp.getSelectedItem().toString();
-                    forma = spMorfCub.getSelectedItem().toString();
-                    inclinacion = spIncCub.getSelectedItem().toString();
-                    estado = spEstGenCub.getSelectedItem().toString();
+                        try {
+                            idRegistro = bdP.insertarCeniza_ID(
+                                    id_house,
+                                    tipoTecho,
+                                    matCob,
+                                    matEle,
+                                    forma,
+                                    inclinacion,
+                                    estado,
+                                    spTipCeniza.getSelectedItem().toString(),
+                                    observaciones.replaceAll("\n", ""));
+
+                            Toast toast;
+                            toast=Toast.makeText(context,"Tipologia Caida de Ceniza - Guardado Exitoso",Toast.LENGTH_SHORT);
+                            toast.show();
+                        }
+                        catch (Exception e){
+                            Toast toast;
+                            toast=Toast.makeText(context,e.toString(),Toast.LENGTH_LONG);
+                            toast.show();
+                        }
+                    }
                 }
-
+            }else{
+                tipificacionCeniza();
                 observaciones = etObservaciones.getText().toString();
 
                 try {
-                    idRegistro = bdP.insertarCeniza(
-                            idCasa,
+                    idRegistro = bdP.insertarCeniza_ID(
+                            id_house,
                             tipoTecho,
                             matCob,
                             matEle,
@@ -413,6 +449,9 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
         switch (tipo){
             case 1:
                 switch (opc){
+                    case " ":
+                        spMatCob.setSelection(0);
+                        break;
                     case "Policarbonato":
                         spMatCob.setSelection(1);
                         break;
@@ -432,6 +471,9 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
                 break;
             case 2:
                 switch (opc){
+                    case " ":
+                        spMatElemAp.setSelection(0);
+                        break;
                     case "Vigas Concreto":
                         spMatElemAp.setSelection(1);
                         break;
@@ -445,6 +487,9 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
                 break;
             case 3:
                 switch (opc){
+                    case " ":
+                        spMorfCub.setSelection(0);
+                        break;
                     case "A dos Aguas":
                         spMorfCub.setSelection(1);
                         break;
@@ -458,6 +503,9 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
                 break;
             case 4:
                 switch (opc){
+                    case " ":
+                        spIncCub.setSelection(0);
+                        break;
                     case "Levemente Inclinada":
                         spIncCub.setSelection(1);
                         break;
@@ -468,6 +516,9 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
                 break;
             case 5:
                 switch (opc){
+                    case " ":
+                        spEstGenCub.setSelection(0);
+                        break;
                     case "Bueno":
                         spEstGenCub.setSelection(1);
                         break;
@@ -476,6 +527,22 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
                         break;
                     case "Malo":
                         spEstGenCub.setSelection(3);
+                        break;
+                }
+                break;
+            case 6:
+                switch (opc){
+                    case "Tipologia_1":
+                        spTipCeniza.setSelection(1);
+                        break;
+                    case "Tipologia_2":
+                        spTipCeniza.setSelection(2);
+                        break;
+                    case "Tipologia_3":
+                        spTipCeniza.setSelection(3);
+                        break;
+                    case "Tipologia_4":
+                        spTipCeniza.setSelection(4);
                         break;
                 }
                 break;

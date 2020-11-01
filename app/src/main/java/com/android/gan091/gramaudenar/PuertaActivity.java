@@ -20,8 +20,6 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -39,7 +37,8 @@ public class PuertaActivity extends AppCompatActivity implements View.OnClickLis
 
     boolean existe = false;
     float areaLocal;
-    int idCasa, posicion;
+    int posicion;
+    String id_house;
     long idRegistro = 0;
 
     Fuente objetoEliminado;
@@ -67,7 +66,7 @@ public class PuertaActivity extends AppCompatActivity implements View.OnClickLis
         FloatingActionButton fabExit = findViewById(R.id.fabExitPuerta);
         Bundle bundle = getIntent().getExtras();
 
-        idCasa = bundle.getInt("idCasa");
+        id_house = bundle.getString("idCasa");
         context = this;
         bdP = new BaseDeDatos(context);
 
@@ -107,7 +106,7 @@ public class PuertaActivity extends AppCompatActivity implements View.OnClickLis
     public void cargarDatos(){
 
         bdP.abrirBD();
-        final Cursor cursor = bdP.cargarDatosTablas(idCasa, "tblPuerta");
+        final Cursor cursor = bdP.cargarDatos_ID_RID(id_house, "tblPuerta");
 
         try {
             if (cursor.moveToFirst()){
@@ -233,13 +232,13 @@ public class PuertaActivity extends AppCompatActivity implements View.OnClickLis
 
                 idRegistro = lista.get(posicion).getIdRegistro();
                 bdP.abrirBD();
-                cursorEliminado = bdP.cargarDatos(idRegistro,"tblpuerta");
+                cursorEliminado = bdP.cargarDatos_RID(idRegistro,"tblpuerta");
                 cursorEliminado.moveToFirst();
                 bdP.cerrarBD();
 
                 if (direction == 8){
                     try {
-                        bdP.eliminarRegistroExacto("tblpuerta",idRegistro);
+                        bdP.eliminarRegistro_RID("tblpuerta",idRegistro);
                     }
                     catch (Exception e){
                         Toast toast;
@@ -253,9 +252,9 @@ public class PuertaActivity extends AppCompatActivity implements View.OnClickLis
                         @Override
                         public void onClick(View view) {
                             try {
-                                long registro = bdP.insertarPuerta(
+                                long registro = bdP.insertarPuerta_RID(
                                         cursorEliminado.getLong(0), //RowId
-                                        cursorEliminado.getInt(1),  //IdCasa
+                                        cursorEliminado.getString(1),  //IdCasa
                                         cursorEliminado.getFloat(2),//Ancho
                                         cursorEliminado.getFloat(3),//Alto
                                         cursorEliminado.getFloat(4));//Area
@@ -293,7 +292,7 @@ public class PuertaActivity extends AppCompatActivity implements View.OnClickLis
         areaLocal = ancho * alto;
 
         try {
-            rPuerta = bdP.insertar(idCasa,ancho,alto,areaLocal);
+            rPuerta = bdP.insertarPuerta_ID(id_house,ancho,alto,areaLocal);
         }
         catch (Exception e){
             Toast toast;
@@ -403,7 +402,7 @@ public class PuertaActivity extends AppCompatActivity implements View.OnClickLis
 
                         bdP.abrirBD();
                         try {
-                            bdP.updatePuerta(idR,anchoRegistro,altoRegistro,areaLocal);
+                            bdP.updatePuerta_RID(idR,anchoRegistro,altoRegistro,areaLocal);
                         }
                         catch (Exception e){
                             Toast toast;

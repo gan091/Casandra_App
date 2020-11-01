@@ -27,7 +27,7 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         //this.sqLiteDatabase = sqLiteDatabase;
 
         String sqlTablaCasa = "CREATE TABLE tblcasa" +
-                "(idcasa INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "(idcasa VARCHAR(30) PRIMARY KEY, " +
                 "latitud VARCHAR(20), " +
                 "longitud VARCHAR(20), " +
                 "lugar VARCHAR(30))";
@@ -43,7 +43,7 @@ public class BaseDeDatos extends SQLiteOpenHelper {
                 "longitud VARCHAR(20))";
 
         String sqlTablaOndaChoqueEnterramiento = "CREATE TABLE tblondachoque" +
-                "(idcasa INTEGER, " +
+                "(idcasa VARCHAR(30), " +
                 "materialventana VARCHAR(7), " +
                 "marcoventana VARCHAR(15), " +
                 "materialpiso VARCHAR(8), " +
@@ -53,28 +53,28 @@ public class BaseDeDatos extends SQLiteOpenHelper {
                 "observacionesoch VARCHAR(200))";
 
         String sqlTablaFachada = "CREATE TABLE tblfachada" +
-                "(idcasa INTEGER, " +
+                "(idcasa VARCHAR(30), " +
                 "ancho FLOAT, " +
                 "altura FLOAT, " +
                 "area FLOAT, " +
                 "areapiso1 FLOAT)";
 
         String sqlTablaFachada1 = "CREATE TABLE tblfachada1" +
-                "(idcasa INTEGER, " +
+                "(idcasa VARCHAR(30), " +
                 "anchofg FLOAT, " +
                 "altofg FLOAT, " +
                 "areafg FLOAT, " +
                 "areatotalfachada FLOAT)";
 
         String sqlTablaVentana = "CREATE TABLE tblventana" +
-                "(idcasa INTEGER, " +
+                "(idcasa VARCHAR(30), " +
                 "ancho FLOAT, " +
                 "altura FLOAT, " +
                 "area FLOAT, " +
                 "numeropiso INTEGER)";
 
         String sqlTablaVentana1 = "CREATE TABLE tblventana1" +
-                "(idcasa INTEGER, " +
+                "(idcasa VARCHAR(30), " +
                 "anchovg FLOAT, " +
                 "altovg FLOAT, " +
                 "areavg FLOAT, " +
@@ -87,20 +87,20 @@ public class BaseDeDatos extends SQLiteOpenHelper {
                 "porcentajeaberturas FLOAT)";
 
         String sqlTablaPuerta = "CREATE TABLE tblpuerta" +
-                "(idcasa INTEGER, " +
+                "(idcasa VARCHAR(30), " +
                 "ancho FLOAT, " +
                 "altura FLOAT, " +
                 "area FLOAT)";
 
         String sqlTablaPuerta1 = "CREATE TABLE tblpuerta1" +
-                "(idcasa INTEGER, " +
+                "(idcasa VARCHAR(30), " +
                 "anchopg FLOAT, " +
                 "alturapg FLOAT, " +
                 "areapg FLOAT, " +
                 "areatotalpuertas FLOAT)";
 
         String sqlTablaLahares = "CREATE TABLE tbllahares" +
-                "(idcasa INTEGER, " +
+                "(idcasa VARCHAR(30), " +
                 "reforzado BOOL, " +
                 "materialmuros VARCHAR(16), " +
                 "estadoedificacion VARCHAR(8), " +
@@ -108,7 +108,7 @@ public class BaseDeDatos extends SQLiteOpenHelper {
                 "observacionesl VARCHAR(200))";
 
         String sqlTablaCeniza = "CREATE TABLE tblceniza" +
-                "(idcasa INTEGER, " +
+                "(idcasa VARCHAR(30), " +
                 "tipotecho VARCHAR(9), " +
                 "materialcobertura VARCHAR(16), " +
                 "materialapoyo VARCHAR(16), " +
@@ -155,7 +155,12 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         db = bdP.getWritableDatabase();
     }
 
-    Cursor cargarDatos(){
+    public Cursor cargarDatos(String tabla){
+        cursor = db.rawQuery("SELECT * FROM "+tabla,null);
+        return cursor;
+    }
+
+    Cursor cargarDatosFinales(){
         Cursor cursor = db.rawQuery
                 ("select " +
                                             "tblcasa.idcasa, " +
@@ -228,50 +233,34 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         return cursor;
     }
 
-    public Cursor cargarDatos(String tabla){
-        cursor = db.rawQuery("SELECT * FROM "+tabla,null);
+    Cursor cargarDatosVentanaP1_RID(String idCasa){
+        cursor = db.rawQuery("SELECT ROWID, * FROM tblVentana" +" WHERE idcasa="+"'"+idCasa+"' "+" AND numeropiso=1",null);
         return cursor;
     }
 
-    int getIdCasa(String lat, String lon){
-        int iC=0;
-        abrirBD();
-        cursor = db.rawQuery("SELECT idcasa FROM tblCasa WHERE latitud='"+lat+"' AND longitud='"+lon+"'",null);
-        if (cursor.moveToFirst()){
-            iC = cursor.getInt(0);
-        }
-        cerrarBD();
-        return iC;
-    }
-
-    Cursor cargarDatosTablas(int idCasa, String tabla){
-        cursor = db.rawQuery("SELECT ROWID, * FROM "+tabla+" WHERE idcasa="+idCasa,null);
+    Cursor cargarDatos_ID_RID(String idCasa, String tabla){
+        cursor = db.rawQuery("SELECT ROWID, * FROM "+tabla+" WHERE idcasa="+"'"+idCasa+"'",null);
         return cursor;
     }
 
-    Cursor cargarDatosTablas1(int idCasa){
-        cursor = db.rawQuery("SELECT ROWID, * FROM tblVentana" +" WHERE idcasa="+idCasa+" AND numeropiso=1",null);
-        return cursor;
-    }
+    Cursor cargarDatos_RID(long rowId, String tabla){
+        cursor = db.rawQuery("SELECT ROWID, * FROM "+tabla+" WHERE ROWID="+rowId,null);
+        return cursor;    }
 
-    Cursor cargarDatos(String parametro1, String parametro2, String tabla){
+    Cursor cargarDatos2P(String parametro1, String parametro2, String tabla){
         cursor = db.rawQuery("SELECT "+parametro1+", "+parametro2+" FROM "+tabla,null);
         return cursor;
     }
 
-    Cursor cargarDatos(long rowId, String tabla){
-        cursor = db.rawQuery("SELECT ROWID, * FROM "+tabla+" WHERE ROWID="+rowId,null);
-        return cursor;    }
-
     //Verficar si ya no se utiliza este metodo
-    Cursor cargarDatos(String parametro1, String parametro2, String tabla, int idCasa){
-        String sql = "SELECT "+parametro1+", "+parametro2+" FROM "+tabla+" WHERE idcasa="+idCasa;
+    Cursor cargarDatos2P_ID(String parametro1, String parametro2, String tabla, String idCasa){
+        String sql = "SELECT "+parametro1+", "+parametro2+" FROM "+tabla+" WHERE idcasa="+"'"+idCasa+"'";
         cursor = db.rawQuery(sql,null);
         return cursor;
     }
 
-    Cursor cargarDatos(String parametro1, String parametro2, String parametro3, String tabla, int idCasa){
-        String sql = "SELECT "+parametro1+", "+parametro2+", "+parametro3+" FROM "+tabla+" WHERE idcasa="+idCasa;
+    Cursor cargarDatos3P_ID(String parametro1, String parametro2, String parametro3, String tabla, String idCasa){
+        String sql = "SELECT "+parametro1+", "+parametro2+", "+parametro3+" FROM "+tabla+" WHERE idcasa="+"'"+idCasa+"'";
         cursor = db.rawQuery(sql,null);
         return cursor;
     }
@@ -280,33 +269,29 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         db.close();
     }
 
+    void eliminarRegistro_ID(String tabla, String idCasa) {
+        abrirBD();
+        db.execSQL("DELETE FROM "+tabla+" WHERE idcasa="+"'"+idCasa+"'");
+        cerrarBD();
+    }
+
+    void eliminarRegistro_RID(String tabla, long rowId) throws Exception{
+        abrirBD();
+        db.execSQL("DELETE FROM "+tabla+" WHERE ROWID="+rowId);
+        cerrarBD();
+    }
+
     public void eliminarUsuario(int idUsuario){
         abrirBD();
         db.execSQL("DELETE FROM tblusuarios WHERE iduser="+idUsuario);
         cerrarBD();
     }
 
-    void eliminarRegistro(String tabla, int idCasa) {
-        abrirBD();
-        db.execSQL("DELETE FROM "+tabla+" WHERE idcasa="+idCasa);
-        cerrarBD();
-    }
-
-    void eliminarRegistroExacto(String tabla, long rowId) throws Exception{
-        abrirBD();
-        db.execSQL("DELETE FROM "+tabla+" WHERE ROWID="+rowId);
-        cerrarBD();
-    }
-
-    void limpiarTabla(String tabla) throws Exception{
-        db.execSQL("DELETE FROM "+ tabla);
-    }
-
-    boolean existeRegistro(String tabla, int idCasa) {
+    boolean existeRegistro_ID(String tabla, String idCasa) {
         abrirBD();
         boolean existe = false;
         if (db != null) {
-            cursor = db.rawQuery("SELECT * FROM "+tabla+" WHERE idcasa="+idCasa, null);
+            cursor = db.rawQuery("SELECT * FROM "+tabla+" WHERE idcasa="+"'"+idCasa+"'", null);
             cursor.moveToFirst();
 
             if (cursor.getCount() > 0) {
@@ -316,7 +301,7 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         return existe;
     }
 
-    boolean existeRegistro(long idR, String tabla) {
+    boolean existeRegistro_RID(long idR, String tabla) {
         abrirBD();
         boolean existe = false;
         if (db != null) {
@@ -330,6 +315,17 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         return existe;
     }
 
+    String getIdCasa(String lat, String lon){
+        String iC="";
+        abrirBD();
+        cursor = db.rawQuery("SELECT idcasa FROM tblCasa WHERE latitud='"+lat+"' AND longitud='"+lon+"'",null);
+        if (cursor.moveToFirst()){
+            iC = cursor.getString(0);
+        }
+        cerrarBD();
+        return iC;
+    }
+
     void insertarCamara(String lat, String lon) throws Exception{
         abrirBD();
         ContentValues values = new ContentValues();
@@ -339,109 +335,9 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         cerrarBD();
     }
 
-    public void updateUsuario(int id, String u, String p) throws Exception {
-        abrirBD();
+    long insertarCasa(String id, String lat, String lon, String zona) throws Exception{
         ContentValues values = new ContentValues();
-        values.put("user",u);
-        values.put("pass",p);
-        db.update("tblusuarios",values,"iduser="+id,null);
-        cerrarBD();
-    }
-
-    void updateLahares(int idCasa, String tipLah, String tabla) throws Exception{
-        ContentValues values = new ContentValues();
-        values.put("tipologialahares",tipLah);
-        db.update(tabla,values,"idcasa="+idCasa,null);
-    }
-
-    void updateFachada(long rowId, float ancho, float area, float area1) throws Exception{
-        ContentValues values = new ContentValues();
-        values.put("ancho",ancho);
-        values.put("area",area);
-        values.put("areapiso1",area1);
-        db.update("tblfachada",values,"ROWID="+rowId,null);
-    }
-
-    void updateVentana(long rowId, float ancho, float alto, int numP, float area) throws Exception{
-        ContentValues values = new ContentValues();
-        values.put("ancho",ancho);
-        values.put("altura",alto);
-        values.put("area",area);
-        values.put("numeropiso",numP);
-        db.update("tblventana",values,"ROWID="+rowId,null);
-    }
-
-    void updatePuerta(long rowId, float ancho, float alto, float area) throws Exception{
-        ContentValues values = new ContentValues();
-        values.put("ancho",ancho);
-        values.put("altura",alto);
-        values.put("area",area);
-        db.update("tblpuerta",values,"ROWID="+rowId,null);
-    }
-
-    void updateOndadeChoque(long rowId, String matVen, String marVen, String matPiso, String tipOndaCh, String tipEnt, String obs) throws Exception{
-        ContentValues values = new ContentValues();
-        values.put("materialventana",matVen);
-        values.put("marcoventana",marVen);
-        values.put("materialpiso",matPiso);
-        values.put("tipologiaonda",tipOndaCh);
-        values.put("tipologiaent",tipEnt);
-        values.put("observacionesoch",obs);
-        db.update("tblondachoque",values,"ROWID="+rowId,null);
-    }
-
-    void updateLahares(long rowId, boolean refuerzo, String materialMuros, String estadoGeneral, String tipologiaLahares, String obs) throws Exception{
-
-        ContentValues values = new ContentValues();
-        values.put("reforzado",refuerzo);
-        values.put("materialmuros",materialMuros);
-        values.put("estadoedificacion",estadoGeneral);
-        values.put("tipologialahares",tipologiaLahares);
-        values.put("observacionesl",obs);
-        db.update("tbllahares",values,"ROWID="+rowId,null);
-    }
-
-    void updateCaidadeCeniza(long rowId, String tipoTecho, String materialCobertura, String materialElementoApoyo, String formaCubierta, String inclinacionCubierta, String estadoGeneral, String tipologiaCeniza, String obs) throws Exception{
-
-        ContentValues values = new ContentValues();
-        values.put("tipotecho",tipoTecho);
-        values.put("materialcobertura",materialCobertura);
-        values.put("materialapoyo",materialElementoApoyo);
-        values.put("formacubierta",formaCubierta);
-        values.put("inclinacioncubierta",inclinacionCubierta);
-        values.put("estadogeneralcubierta",estadoGeneral);
-        values.put("tipologiaceniza",tipologiaCeniza);
-        values.put("observacionesc",obs);
-        db.update("tblceniza",values,"ROWID="+rowId,null);
-    }
-
-    void updateCeniza(int idCasa, String tipCen, String tabla) throws Exception{
-        ContentValues values = new ContentValues();
-        values.put("tipologiaceniza",tipCen);
-        db.update(tabla,values,"idcasa="+idCasa,null);
-    }
-
-    void updateTutorial(int valor) {
-        ContentValues values = new ContentValues();
-        values.put("visto",valor);
-        db.update("tbltutorial",values,"ROWID=1",null);
-    }
-
-    public boolean insertarUsuario(String u, String p){
-        abrirBD();
-        long registro = 0;
-
-        ContentValues values = new ContentValues();
-        values.put("user",u);
-        values.put("pass",p);
-
-        registro = db.insert("tblusuarios",null,values);
-        cerrarBD();
-        return (registro>0);
-    }
-
-    long insertarCasa(String lat, String lon, String zona) throws Exception{
-        ContentValues values = new ContentValues();
+        values.put("idcasa",id);
         values.put("latitud",lat);
         values.put("longitud",lon);
         values.put("lugar",zona);
@@ -449,175 +345,7 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         return db.insert("tblcasa",null,values);
     }
 
-    long insertar(int idCasa, float anchoP, float alturaP, float areaP) throws Exception{
-        abrirBD();
-        long registro=0;
-
-        if(db!=null){
-            ContentValues nuevoRegistro = new ContentValues();
-            nuevoRegistro.put("idcasa",idCasa);
-            nuevoRegistro.put("ancho",anchoP);
-            nuevoRegistro.put("altura",alturaP);
-            nuevoRegistro.put("area",areaP);
-
-            registro = db.insert("tblpuerta",null,nuevoRegistro);
-        }
-        cerrarBD();
-        return registro;
-    }
-
-    long insertarFachada1(int idCasa, float anchoFG, float alturaFG, float areaFG, float areaTFG) throws Exception{
-        long registro=0;
-
-        if(db!=null){
-            ContentValues nuevoRegistro = new ContentValues();
-            nuevoRegistro.put("idcasa",idCasa);
-            nuevoRegistro.put("anchofg",anchoFG);
-            nuevoRegistro.put("altofg",alturaFG);
-            nuevoRegistro.put("areafg",areaFG);
-            nuevoRegistro.put("areatotalfachada",areaTFG);
-
-            registro = db.insert("tblfachada1",null,nuevoRegistro);
-        }
-        return registro;
-    }
-
-    long insertarPuerta1(int idCasa, float anchoPG, float alturaPG, float areaPG, float areaTPG) throws Exception{
-        long registro=0;
-
-        if(db!=null){
-            ContentValues nuevoRegistro = new ContentValues();
-            nuevoRegistro.put("idcasa",idCasa);
-            nuevoRegistro.put("anchopg",anchoPG);
-            nuevoRegistro.put("alturapg",alturaPG);
-            nuevoRegistro.put("areapg",areaPG);
-            nuevoRegistro.put("areatotalpuertas",areaTPG);
-
-            registro = db.insert("tblpuerta1",null,nuevoRegistro);
-        }
-        return registro;
-    }
-
-    long insertarVentana1(int idCasa, float anchoVG, float alturaVG, float areaVG, int nPisoVG, float anchoVP, float alturaVP, float areaVP, int nPisoVP, float areaTotalVen, float porcAb) throws Exception{
-        long registro=0;
-
-        if(db!=null){
-            ContentValues nuevoRegistro = new ContentValues();
-            nuevoRegistro.put("idcasa",idCasa);
-            nuevoRegistro.put("anchovg",anchoVG);
-            nuevoRegistro.put("altovg",alturaVG);
-            nuevoRegistro.put("areavg",areaVG);
-            nuevoRegistro.put("npisovg",nPisoVG);
-            nuevoRegistro.put("anchovp",anchoVP);
-            nuevoRegistro.put("altovp",alturaVP);
-            nuevoRegistro.put("areavp",areaVP);
-            nuevoRegistro.put("npisovp",nPisoVP);
-            nuevoRegistro.put("areatotalventanas",areaTotalVen);
-            nuevoRegistro.put("porcentajeaberturas",porcAb);
-
-            registro = db.insert("tblventana1",null,nuevoRegistro);
-        }
-        return registro;
-    }
-
-    long insertarFachada(int idCasa, float anchoF, float alturaF, float areaF, float areaFP1) throws Exception{
-        abrirBD();
-        long registro=0;
-        if(db!=null){
-            ContentValues values = new ContentValues();
-            values.put("idcasa",idCasa);
-            values.put("ancho",anchoF);
-            values.put("altura",alturaF);
-            values.put("area",areaF);
-            values.put("areapiso1",areaFP1);
-
-            registro = db.insert("tblfachada",null,values);
-        }
-        cerrarBD();
-        return registro;
-    }
-
-    long insertarFachada(long rowId, int idCasa, float anchoF, float alturaF, float areaF, float areaFP1) throws Exception{
-        abrirBD();
-        long registro=0;
-        if(db!=null){
-            ContentValues values = new ContentValues();
-            values.put("ROWID",rowId);
-            values.put("idcasa",idCasa);
-            values.put("ancho",anchoF);
-            values.put("altura",alturaF);
-            values.put("area",areaF);
-            values.put("areapiso1",areaFP1);
-
-            registro = db.insert("tblfachada",null,values);
-        }
-        cerrarBD();
-        return registro;
-    }
-
-    long insertarVentana(long rowId, int idCasa, float anchoV, float alturaV, float areaV, int numPiso) throws Exception{
-        abrirBD();
-        long registro=0;
-        if(db!=null){
-            ContentValues values = new ContentValues();
-            values.put("ROWID",rowId);
-            values.put("idcasa",idCasa);
-            values.put("ancho",anchoV);
-            values.put("altura",alturaV);
-            values.put("area",areaV);
-            values.put("numeropiso",numPiso);
-
-            registro = db.insert("tblventana",null,values);
-        }
-        cerrarBD();
-        return registro;
-    }
-
-    long insertarPuerta(long rowId, int idCasa, float anchoP, float alturaP, float areaP) throws Exception{
-        abrirBD();
-        long registro=0;
-        if(db!=null){
-            ContentValues values = new ContentValues();
-            values.put("ROWID",rowId);
-            values.put("idcasa",idCasa);
-            values.put("ancho",anchoP);
-            values.put("altura",alturaP);
-            values.put("area",areaP);
-
-            registro = db.insert("tblpuerta",null,values);
-        }
-        cerrarBD();
-        return registro;
-    }
-
-    long insertar(int idCasa, float anchoV, float altoV, float areaV, int numPiso) throws Exception{
-        abrirBD();
-        long registro=0;
-
-        if(db!=null){
-            ContentValues nuevoRegistro = new ContentValues();
-            nuevoRegistro.put("idcasa",idCasa);
-            nuevoRegistro.put("ancho",anchoV);
-            nuevoRegistro.put("altura",altoV);
-            nuevoRegistro.put("area",areaV);
-            nuevoRegistro.put("numeropiso",numPiso);
-
-            registro = db.insert("tblventana",null,nuevoRegistro);
-        }
-        cerrarBD();
-        return registro;
-    }
-
-    void insertar(String corregimiento, int sector) throws Exception{
-        abrirBD();
-        ContentValues values = new ContentValues();
-        values.put("corregimiento",corregimiento);
-        values.put("sector",sector);
-        db.update("tblzona",values,"id=1",null);
-        cerrarBD();
-    }
-
-    long insertarCeniza(int idCasa, String tipoTecho, String matCob, String matElemApoyo, String formaCubierta, String inclCub, String estadoGen, String tipCeniza, String obvs) throws Exception{
+    long insertarCeniza_ID(String idCasa, String tipoTecho, String matCob, String matElemApoyo, String formaCubierta, String inclCub, String estadoGen, String tipCeniza, String obvs) throws Exception{
         abrirBD();
         long registro = 0;
 
@@ -639,7 +367,58 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         return registro;
     }
 
-    long insertarLahares(int idCasa, boolean reforzado, String matMur, String estGeneral, String tipLahares, String obvs) throws Exception{
+    long insertarFachada_ID(String idCasa, float anchoF, float alturaF, float areaF, float areaFP1) throws Exception{
+        abrirBD();
+        long registro=0;
+        if(db!=null){
+            ContentValues values = new ContentValues();
+            values.put("idcasa",idCasa);
+            values.put("ancho",anchoF);
+            values.put("altura",alturaF);
+            values.put("area",areaF);
+            values.put("areapiso1",areaFP1);
+
+            registro = db.insert("tblfachada",null,values);
+        }
+        cerrarBD();
+        return registro;
+    }
+
+    long insertarFachada_RID(long rowId, String idCasa, float anchoF, float alturaF, float areaF, float areaFP1) throws Exception{
+        abrirBD();
+        long registro=0;
+        if(db!=null){
+            ContentValues values = new ContentValues();
+            values.put("ROWID",rowId);
+            values.put("idcasa",idCasa);
+            values.put("ancho",anchoF);
+            values.put("altura",alturaF);
+            values.put("area",areaF);
+            values.put("areapiso1",areaFP1);
+
+            registro = db.insert("tblfachada",null,values);
+        }
+        cerrarBD();
+        return registro;
+    }
+
+    long insertarFachada1_ID(String idCasa, float anchoFG, float alturaFG, float areaFG, float areaTFG) throws Exception{
+        long registro=0;
+
+        if(db!=null){
+            ContentValues nuevoRegistro = new ContentValues();
+            nuevoRegistro.put("idcasa",idCasa);
+            nuevoRegistro.put("anchofg",anchoFG);
+            nuevoRegistro.put("altofg",alturaFG);
+            nuevoRegistro.put("areafg",areaFG);
+            nuevoRegistro.put("areatotalfachada",areaTFG);
+
+            registro = db.insert("tblfachada1",null,nuevoRegistro);
+        }
+        return registro;
+    }
+
+    long insertarLahares_ID(String idCasa, boolean reforzado, String matMur, String estGeneral, String tipLahares, String obvs) throws Exception{
         abrirBD();
         long registro = 0;
 
@@ -658,7 +437,7 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         return registro;
     }
 
-    long insertarOndaChoqueEnterramiento(int idCasa, String matVen, String marVen, String matPiso, String matMur, String tipOndaCh, String tipEnt, String obvs) throws Exception{
+    long insertarOndaChoqueEnterramiento_ID(String idCasa, String matVen, String marVen, String matPiso, String matMur, String tipOndaCh, String tipEnt, String obvs) throws Exception{
         abrirBD();
         long registro = 0;
 
@@ -677,6 +456,228 @@ public class BaseDeDatos extends SQLiteOpenHelper {
         }
         cerrarBD();
         return registro;
+    }
+
+    long insertarPuerta_ID(String idCasa, float anchoP, float alturaP, float areaP) throws Exception{
+        abrirBD();
+        long registro=0;
+
+        if(db!=null){
+            ContentValues nuevoRegistro = new ContentValues();
+            nuevoRegistro.put("idcasa",idCasa);
+            nuevoRegistro.put("ancho",anchoP);
+            nuevoRegistro.put("altura",alturaP);
+            nuevoRegistro.put("area",areaP);
+
+            registro = db.insert("tblpuerta",null,nuevoRegistro);
+        }
+        cerrarBD();
+        return registro;
+    }
+
+    long insertarPuerta_RID(long rowId, String idCasa, float anchoP, float alturaP, float areaP) throws Exception{
+        abrirBD();
+        long registro=0;
+        if(db!=null){
+            ContentValues values = new ContentValues();
+            values.put("ROWID",rowId);
+            values.put("idcasa",idCasa);
+            values.put("ancho",anchoP);
+            values.put("altura",alturaP);
+            values.put("area",areaP);
+
+            registro = db.insert("tblpuerta",null,values);
+        }
+        cerrarBD();
+        return registro;
+    }
+
+    long insertarPuerta1_ID(String idCasa, float anchoPG, float alturaPG, float areaPG, float areaTPG) throws Exception{
+        long registro=0;
+
+        if(db!=null){
+            ContentValues nuevoRegistro = new ContentValues();
+            nuevoRegistro.put("idcasa",idCasa);
+            nuevoRegistro.put("anchopg",anchoPG);
+            nuevoRegistro.put("alturapg",alturaPG);
+            nuevoRegistro.put("areapg",areaPG);
+            nuevoRegistro.put("areatotalpuertas",areaTPG);
+
+            registro = db.insert("tblpuerta1",null,nuevoRegistro);
+        }
+        return registro;
+    }
+
+    public boolean insertarUsuario(String u, String p){
+        abrirBD();
+        long registro = 0;
+
+        ContentValues values = new ContentValues();
+        values.put("user",u);
+        values.put("pass",p);
+
+        registro = db.insert("tblusuarios",null,values);
+        cerrarBD();
+        return (registro>0);
+    }
+
+    long insertarVentana_ID(String idCasa, float anchoV, float altoV, float areaV, int numPiso) throws Exception{
+        abrirBD();
+        long registro=0;
+
+        if(db!=null){
+            ContentValues nuevoRegistro = new ContentValues();
+            nuevoRegistro.put("idcasa",idCasa);
+            nuevoRegistro.put("ancho",anchoV);
+            nuevoRegistro.put("altura",altoV);
+            nuevoRegistro.put("area",areaV);
+            nuevoRegistro.put("numeropiso",numPiso);
+
+            registro = db.insert("tblventana",null,nuevoRegistro);
+        }
+        cerrarBD();
+        return registro;
+    }
+
+    long insertarVentana_RID(long rowId, String idCasa, float anchoV, float alturaV, float areaV, int numPiso) throws Exception{
+        abrirBD();
+        long registro=0;
+        if(db!=null){
+            ContentValues values = new ContentValues();
+            values.put("ROWID",rowId);
+            values.put("idcasa",idCasa);
+            values.put("ancho",anchoV);
+            values.put("altura",alturaV);
+            values.put("area",areaV);
+            values.put("numeropiso",numPiso);
+
+            registro = db.insert("tblventana",null,values);
+        }
+        cerrarBD();
+        return registro;
+    }
+
+    long insertarVentana1_ID(String idCasa, float anchoVG, float alturaVG, float areaVG, int nPisoVG, float anchoVP, float alturaVP, float areaVP, int nPisoVP, float areaTotalVen, float porcAb) throws Exception{
+        long registro=0;
+
+        if(db!=null){
+            ContentValues nuevoRegistro = new ContentValues();
+            nuevoRegistro.put("idcasa",idCasa);
+            nuevoRegistro.put("anchovg",anchoVG);
+            nuevoRegistro.put("altovg",alturaVG);
+            nuevoRegistro.put("areavg",areaVG);
+            nuevoRegistro.put("npisovg",nPisoVG);
+            nuevoRegistro.put("anchovp",anchoVP);
+            nuevoRegistro.put("altovp",alturaVP);
+            nuevoRegistro.put("areavp",areaVP);
+            nuevoRegistro.put("npisovp",nPisoVP);
+            nuevoRegistro.put("areatotalventanas",areaTotalVen);
+            nuevoRegistro.put("porcentajeaberturas",porcAb);
+
+            registro = db.insert("tblventana1",null,nuevoRegistro);
+        }
+        return registro;
+    }
+
+    void insertarZona(String corregimiento, int sector) throws Exception{
+        abrirBD();
+        ContentValues values = new ContentValues();
+        values.put("corregimiento",corregimiento);
+        values.put("sector",sector);
+        db.update("tblzona",values,"id=1",null);
+        cerrarBD();
+    }
+
+    void limpiarTabla(String tabla) throws Exception{
+        db.execSQL("DELETE FROM "+ tabla);
+    }
+
+    void updateCaidadeCeniza_RID(long rowId, String tipoTecho, String materialCobertura, String materialElementoApoyo, String formaCubierta, String inclinacionCubierta, String estadoGeneral, String tipologiaCeniza, String obs) throws Exception{
+
+        ContentValues values = new ContentValues();
+        values.put("tipotecho",tipoTecho);
+        values.put("materialcobertura",materialCobertura);
+        values.put("materialapoyo",materialElementoApoyo);
+        values.put("formacubierta",formaCubierta);
+        values.put("inclinacioncubierta",inclinacionCubierta);
+        values.put("estadogeneralcubierta",estadoGeneral);
+        values.put("tipologiaceniza",tipologiaCeniza);
+        values.put("observacionesc",obs);
+        db.update("tblceniza",values,"ROWID="+rowId,null);
+    }
+
+    void updateCeniza_ID(String idCasa, String tipCen, String tabla) throws Exception{
+        ContentValues values = new ContentValues();
+        values.put("tipologiaceniza",tipCen);
+        db.update(tabla,values,"idcasa="+"'"+idCasa+"'",null);
+    }
+
+    void updateFachada_RID(long rowId, float ancho, float area, float area1) throws Exception{
+        ContentValues values = new ContentValues();
+        values.put("ancho",ancho);
+        values.put("area",area);
+        values.put("areapiso1",area1);
+        db.update("tblfachada",values,"ROWID="+rowId,null);
+    }
+
+    void updateLahares_ID(String idCasa, String tipLah, String tabla) throws Exception{
+        ContentValues values = new ContentValues();
+        values.put("tipologialahares",tipLah);
+        db.update(tabla,values,"idcasa="+"'"+idCasa+"'",null);
+    }
+
+    void updateLahares_RID(long rowId, boolean refuerzo, String materialMuros, String estadoGeneral, String tipologiaLahares, String obs) throws Exception{
+
+        ContentValues values = new ContentValues();
+        values.put("reforzado",refuerzo);
+        values.put("materialmuros",materialMuros);
+        values.put("estadoedificacion",estadoGeneral);
+        values.put("tipologialahares",tipologiaLahares);
+        values.put("observacionesl",obs);
+        db.update("tbllahares",values,"ROWID="+rowId,null);
+    }
+
+    void updateOndadeChoque_RID(long rowId, String matVen, String marVen, String matPiso, String tipOndaCh, String tipEnt, String obs) throws Exception{
+        ContentValues values = new ContentValues();
+        values.put("materialventana",matVen);
+        values.put("marcoventana",marVen);
+        values.put("materialpiso",matPiso);
+        values.put("tipologiaonda",tipOndaCh);
+        values.put("tipologiaent",tipEnt);
+        values.put("observacionesoch",obs);
+        db.update("tblondachoque",values,"ROWID="+rowId,null);
+    }
+
+    void updatePuerta_RID(long rowId, float ancho, float alto, float area) throws Exception{
+        ContentValues values = new ContentValues();
+        values.put("ancho",ancho);
+        values.put("altura",alto);
+        values.put("area",area);
+        db.update("tblpuerta",values,"ROWID="+rowId,null);
+    }
+
+    void updateTutorial(int valor) {
+        ContentValues values = new ContentValues();
+        values.put("visto",valor);
+        db.update("tbltutorial",values,"ROWID=1",null);
+    }
+
+    public void updateUsuario(int id, String u, String p) throws Exception {
+        abrirBD();
+        ContentValues values = new ContentValues();
+        values.put("user",u);
+        values.put("pass",p);
+        db.update("tblusuarios",values,"iduser="+id,null);
+        cerrarBD();
+    }
+
+    void updateVentana_RID(long rowId, float ancho, float alto, int numP, float area) throws Exception{
+        ContentValues values = new ContentValues();
+        values.put("ancho",ancho);
+        values.put("altura",alto);
+        values.put("area",area);
+        values.put("numeropiso",numP);
+        db.update("tblventana",values,"ROWID="+rowId,null);
     }
 
     float reducirFloat(float f){
