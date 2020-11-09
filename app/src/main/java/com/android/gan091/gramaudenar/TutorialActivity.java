@@ -27,7 +27,8 @@ public class TutorialActivity extends AppCompatActivity implements View.OnClickL
                 R.drawable.t07,
                 R.drawable.t08,
                 R.drawable.t09,
-                R.drawable.t10
+                R.drawable.t10,
+                R.drawable.t11
         };
 
         ImageAdapter imageAdapter = new ImageAdapter(this, mImageIds);

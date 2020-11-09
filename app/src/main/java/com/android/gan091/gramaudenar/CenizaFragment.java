@@ -247,10 +247,11 @@ public class CenizaFragment extends Fragment implements View.OnClickListener {
                     setSpinner(cursorCeniza.getString(5),3);
                     setSpinner(cursorCeniza.getString(6),4);
                     setSpinner(cursorCeniza.getString(7),5);
-                    setSpinner(cursorCeniza.getString(8),6);
+
                     etObservaciones.setText(cursorCeniza.getString(9));
-                    //idRegistro = cursorCeniza.getLong(0);
+
                 }while (cursorCeniza.moveToNext());
+                tipificacionCeniza();
             }
         }
         bdP.cerrarBD();

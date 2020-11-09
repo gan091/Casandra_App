@@ -257,10 +257,11 @@ public class OndaChoqueEnterramientoFragment extends Fragment implements View.On
                 setSpinner(cursor.getString(2),1);
                 setSpinner(cursor.getString(3),2);
                 setSpinner(cursor.getString(4),3);
-                setSpinner(cursor.getString(6),4);
-                setSpinner(cursor.getString(7),5);
+
                 et_observations.setText(cursor.getString(8));
             }while (cursor.moveToNext());
+            tipificacionOndaChoque();
+            tipificacionEnterramiento();
         }
         bdP.cerrarBD();
     }

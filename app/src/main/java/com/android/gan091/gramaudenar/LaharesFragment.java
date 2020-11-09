@@ -352,10 +352,11 @@ public class LaharesFragment extends Fragment implements View.OnClickListener{
 
                 setSpinner(cursorLahares.getString(3),1);
                 setSpinner(cursorLahares.getString(4),2);
-                setSpinner(cursorLahares.getString(5),3);
+
                 etObservaciones.setText(cursorLahares.getString(6));
 
             }while (cursorLahares.moveToNext());
+            obtenerTipologia();
         }
         bdP.cerrarBD();
     }
